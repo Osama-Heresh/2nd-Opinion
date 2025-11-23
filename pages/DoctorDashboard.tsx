@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Case, CaseStatus } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star } from 'lucide-react';
+import { Case, CaseStatus, User } from '../types';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
 
 const DoctorDashboard = () => {
@@ -23,10 +23,22 @@ const DoctorDashboard = () => {
 
   const myClosedCases = cases.filter(c => c.opinion?.doctorId === currentUser?.id);
 
-  // Rank Calculation
-  const doctors = users.filter(u => u.role === 'DOCTOR').sort((a,b) => (b.casesClosed || 0) - (a.casesClosed || 0));
+  // Rank Calculation Strategy: Score = (Cases * 10) + Bonus Points
+  const calculateScore = (u: User) => ((u.casesClosed || 0) * 10) + (u.bonusPoints || 0);
+  
+  const doctors = users.filter(u => u.role === 'DOCTOR').sort((a,b) => calculateScore(b) - calculateScore(a));
   const myRank = doctors.findIndex(u => u.id === currentUser?.id) + 1;
-  const nextRankCases = myRank > 1 ? (doctors[myRank - 2].casesClosed || 0) - (currentUser?.casesClosed || 0) + 1 : 0;
+  const myScore = currentUser ? calculateScore(currentUser) : 0;
+  
+  // Calculate points needed for next rank
+  let nextRankMessage = "";
+  if (myRank > 1) {
+      const prevDoc = doctors[myRank - 2];
+      const pointsDiff = calculateScore(prevDoc) - myScore + 1;
+      nextRankMessage = `${pointsDiff} pts to #${myRank - 1}`;
+  } else {
+      nextRankMessage = "You are #1!";
+  }
 
   useEffect(() => {
     setSelectedCase(null);
@@ -74,7 +86,7 @@ const DoctorDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Stats Header */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
            <div>
               <p className="text-sm text-slate-500 font-medium">Wallet Balance</p>
@@ -96,9 +108,9 @@ const DoctorDashboard = () => {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
            <div>
               <p className="text-sm text-slate-500 font-medium">Global Rank</p>
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-col">
                 <p className="text-3xl font-bold text-slate-900">#{myRank}</p>
-                {myRank > 1 && <p className="text-xs text-slate-400">({nextRankCases} to #{myRank - 1})</p>}
+                <p className="text-xs text-slate-400">{nextRankMessage}</p>
               </div>
            </div>
            <div className="bg-yellow-100 p-3 rounded-full">
@@ -112,6 +124,16 @@ const DoctorDashboard = () => {
            </div>
            <div className="bg-orange-100 p-3 rounded-full">
                <Star className="h-6 w-6 text-orange-600" />
+           </div>
+        </div>
+        {/* Bonus Points Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+           <div>
+              <p className="text-sm text-slate-500 font-medium">Bonus Points</p>
+              <p className="text-3xl font-bold text-slate-900">{currentUser?.bonusPoints || 0}</p>
+           </div>
+           <div className="bg-purple-100 p-3 rounded-full">
+               <Award className="h-6 w-6 text-purple-600" />
            </div>
         </div>
       </div>
@@ -215,7 +237,8 @@ const DoctorDashboard = () => {
                                      </span>
                                  ) : (
                                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-sm">
-                                         <CheckCircle className="h-4 w-4" /> Closed
+                                         <CheckCircle className="h-4 w-4" /> 
+                                         {selectedCase.status === CaseStatus.PENDING_INFO ? 'Pending Info' : 'Closed'}
                                      </span>
                                  )}
                              </div>
@@ -263,7 +286,7 @@ const DoctorDashboard = () => {
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div className="bg-white p-3 rounded border border-green-100">
                                         <span className="text-xs text-slate-500 uppercase font-bold block">Decision</span>
-                                        <span className="font-bold text-slate-900">{selectedCase.opinion.decision}</span>
+                                        <span className="font-bold text-slate-900">{selectedCase.opinion.decision === 'MoreTests' ? 'Requested Info' : selectedCase.opinion.decision}</span>
                                     </div>
                                     <div className="bg-white p-3 rounded border border-green-100">
                                         <span className="text-xs text-slate-500 uppercase font-bold block">Submitted On</span>
@@ -271,7 +294,9 @@ const DoctorDashboard = () => {
                                     </div>
                                 </div>
                                 <div className="bg-white p-4 rounded border border-green-100">
-                                    <span className="text-xs text-slate-500 uppercase font-bold block mb-2">Clinical Notes</span>
+                                    <span className="text-xs text-slate-500 uppercase font-bold block mb-2">
+                                        {selectedCase.opinion.decision === 'MoreTests' ? 'Requested Information' : 'Clinical Notes'}
+                                    </span>
                                     <p className="text-slate-800">{selectedCase.opinion.notes}</p>
                                 </div>
                             </div>
@@ -303,14 +328,14 @@ const DoctorDashboard = () => {
                                     onClick={() => setDecision('MoreTests')}
                                     className={`flex-1 py-3 rounded-lg font-medium border transition-all ${decision === 'MoreTests' ? 'bg-yellow-600 border-yellow-500 text-white shadow-lg shadow-yellow-900/20' : 'border-slate-700 hover:bg-slate-800 text-slate-300'}`}
                                 >
-                                    Request Info
+                                    Request More Tests
                                 </button>
                             </div>
 
                             <textarea 
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Provide your detailed medical opinion, reasoning, and next steps..."
+                                placeholder={decision === 'MoreTests' ? "Please list the specific tests, labs, or history records required to complete the diagnosis..." : "Provide your detailed medical opinion, reasoning, and next steps..."}
                                 className="w-full bg-slate-800 border-slate-700 text-white rounded-lg p-4 h-32 mb-4 focus:ring-2 focus:ring-primary-500 outline-none placeholder:text-slate-500 resize-none text-sm"
                             />
 
@@ -319,8 +344,10 @@ const DoctorDashboard = () => {
                                 disabled={!notes}
                                 className="w-full bg-white text-slate-900 py-4 rounded-lg font-bold hover:bg-slate-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <span className="text-primary-600 bg-primary-50 p-1 rounded-full"><Check className="h-4 w-4" /></span>
-                                Submit Opinion & Earn $28.00
+                                <span className="text-primary-600 bg-primary-50 p-1 rounded-full">
+                                    {decision === 'MoreTests' ? <AlertCircle className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                                </span>
+                                {decision === 'MoreTests' ? "Submit Request (Status: Pending Info)" : "Submit Opinion & Earn $28.00"}
                             </button>
                         </div>
                     )}

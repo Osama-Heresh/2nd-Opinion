@@ -205,10 +205,15 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     const totalRating = doctorCases.reduce((acc, c) => acc + (c.patientRating || 0), 0);
     const newAverage = doctorCases.length > 0 ? totalRating / doctorCases.length : rating;
 
-    // 3. Update the Doctor User Object
+    // 3. Update the Doctor User Object & Award Bonus Points for 5-Star Ratings
     setUsers(prev => prev.map(u => {
         if (u.id === doctorId) {
-            return { ...u, rating: parseFloat(newAverage.toFixed(1)) };
+            const bonusAward = rating === 5 ? 5 : 0;
+            return { 
+              ...u, 
+              rating: parseFloat(newAverage.toFixed(1)),
+              bonusPoints: (u.bonusPoints || 0) + bonusAward
+            };
         }
         return u;
     }));

@@ -62,21 +62,21 @@ const PatientDashboard = () => {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <button 
                 onClick={() => { setActiveTab('new'); setSelectedDoctor(null); }}
-                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'new' && !selectedDoctor ? 'bg-blue-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
+                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'new' && !selectedDoctor ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
             >
                 <PlusCircle className="h-5 w-5" />
                 <span className="font-medium">{t('btn.newCase')}</span>
             </button>
             <button 
                 onClick={() => { setActiveTab('list'); setSelectedDoctor(null); }}
-                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'list' && !selectedDoctor ? 'bg-blue-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
+                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'list' && !selectedDoctor ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
             >
                 <FileText className="h-5 w-5" />
                 <span className="font-medium">My Cases ({myCases.length})</span>
             </button>
              <button 
                 onClick={() => { setActiveTab('doctors'); setSelectedDoctor(null); }}
-                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'doctors' && !selectedDoctor ? 'bg-blue-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
+                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'doctors' && !selectedDoctor ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
             >
                 <Users className="h-5 w-5" />
                 <span className="font-medium">Find Doctors</span>
@@ -250,7 +250,7 @@ const PatientDashboard = () => {
                             type="button"
                             onClick={handleRefine}
                             disabled={isRefining || !symptoms}
-                            className="text-xs flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium disabled:opacity-50"
+                            className="text-xs flex items-center gap-1 text-secondary-600 hover:text-secondary-700 font-medium disabled:opacity-50"
                         >
                             {isRefining ? <Loader2 className="h-3 w-3 animate-spin" /> : <BrainCircuit className="h-3 w-3" />}
                             {t('ai.refine')} (Gemini)
@@ -296,12 +296,15 @@ const PatientDashboard = () => {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="font-bold text-lg text-slate-900">{c.specialty}</span>
-                                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
-                                        c.status === CaseStatus.OPEN ? 'bg-blue-100 text-blue-700' :
-                                        c.status === CaseStatus.CLOSED ? 'bg-green-100 text-green-700' :
-                                        'bg-yellow-100 text-yellow-700'
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${
+                                        c.status === CaseStatus.OPEN ? 'bg-blue-100 text-blue-800' :
+                                        c.status === CaseStatus.CLOSED ? 'bg-green-100 text-green-800' :
+                                        c.status === CaseStatus.PENDING_INFO ? 'bg-orange-100 text-orange-800' :
+                                        'bg-slate-100 text-slate-800'
                                     }`}>
-                                        {c.status}
+                                        {c.status === CaseStatus.OPEN ? 'Pending' : 
+                                         c.status === CaseStatus.CLOSED ? 'Reviewed' : 
+                                         c.status === CaseStatus.PENDING_INFO ? 'Needs Info' : c.status}
                                     </span>
                                 </div>
                                 <p className="text-sm text-slate-500 mt-1">Created: {new Date(c.createdAt).toLocaleDateString()}</p>

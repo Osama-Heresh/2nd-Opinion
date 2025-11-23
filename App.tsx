@@ -5,6 +5,9 @@ import Landing from './pages/Landing';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import HipaaCompliance from './pages/HipaaCompliance';
+import HowItWorks from './pages/HowItWorks';
+import Reviews from './pages/Reviews';
 import { UserRole } from './types';
 import { 
   Activity, Languages, LogOut, Wallet, 
@@ -43,9 +46,9 @@ const Header = () => {
                 {/* Desktop Nav Links (Public) */}
                 {!currentUser && (
                     <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-                        <Link to="/" className="hover:text-primary-600 transition">How it Works</Link>
-                        <Link to="/" className="hover:text-primary-600 transition">Specialists</Link>
-                        <Link to="/" className="hover:text-primary-600 transition">Reviews</Link>
+                        <Link to="/how-it-works" className="hover:text-primary-600 transition">{t('nav.howItWorks')}</Link>
+                        <Link to="/" className="hover:text-primary-600 transition">{t('nav.specialists')}</Link>
+                        <Link to="/reviews" className="hover:text-primary-600 transition">{t('nav.reviews')}</Link>
                     </div>
                 )}
             </div>
@@ -64,7 +67,7 @@ const Header = () => {
                 <>
                   <div className="hidden md:flex flex-col items-end mr-2 border-r border-slate-200 pr-4">
                     <span className="text-sm font-bold text-slate-900">{currentUser.name}</span>
-                    <span className="text-xs text-slate-500 capitalize">{currentUser.role.toLowerCase()}</span>
+                    <span className="text-xs text-slate-500 capitalize">{t(`role.${currentUser.role.toLowerCase()}`) || currentUser.role}</span>
                   </div>
                    <div className="flex items-center gap-1 bg-secondary-50 px-3 py-1.5 rounded-full border border-secondary-100 shadow-sm">
                     <Wallet className="h-4 w-4 text-secondary-600" />
@@ -73,15 +76,15 @@ const Header = () => {
                   <button 
                     onClick={logout} 
                     className="ml-2 p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-full transition-colors"
-                    title="Logout"
+                    title={t('nav.logout')}
                   >
                     <LogOut className="h-5 w-5" />
                   </button>
                 </>
               ) : (
                 <div className="flex gap-3">
-                    <Link to="/" className="hidden md:block text-sm font-bold text-slate-600 hover:text-primary-600 px-3 py-2.5">Login</Link>
-                    <Link to="/" className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-full hover:bg-primary-700 transition shadow-lg shadow-primary-200">Get Started</Link>
+                    <Link to="/" className="hidden md:block text-sm font-bold text-slate-600 hover:text-primary-600 px-3 py-2.5">{t('nav.login')}</Link>
+                    <Link to="/" className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-full hover:bg-primary-700 transition shadow-lg shadow-primary-200">{t('nav.getStarted')}</Link>
                 </div>
               )}
             </div>
@@ -92,8 +95,9 @@ const Header = () => {
 }
 
 const Footer = () => {
+    const { t } = useApp();
     return (
-        <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 font-sans">
+        <footer className="bg-slate-950 text-slate-300 border-t border-primary-900 font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 <div className="grid md:grid-cols-4 gap-12">
                     {/* Brand */}
@@ -102,10 +106,10 @@ const Footer = () => {
                             <div className="bg-primary-600 rounded p-1">
                                 <Activity className="h-5 w-5 text-white" />
                             </div>
-                            <span className="text-xl font-display font-bold tracking-tight">2nd Opinion</span>
+                            <span className="text-xl font-display font-bold tracking-tight">{t('app.title')}</span>
                         </Link>
                         <p className="text-sm text-slate-400 leading-relaxed">
-                            Connecting patients with world-class specialists for reliable second medical opinions, powered by AI and secure technology.
+                            {t('footer.desc')}
                         </p>
                         <div className="flex gap-4">
                             <a href="#" className="hover:text-white hover:bg-slate-800 transition p-2 rounded-full"><Facebook className="h-5 w-5" /></a>
@@ -117,29 +121,28 @@ const Footer = () => {
 
                     {/* Quick Links */}
                     <div>
-                        <h3 className="text-white font-bold mb-6 font-display">Platform</h3>
+                        <h3 className="text-white font-bold mb-6 font-display">{t('footer.platform')}</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> How it Works</Link></li>
-                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> Find a Doctor</Link></li>
-                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> Patient Reviews</Link></li>
-                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> For Doctors</Link></li>
+                            <li><Link to="/how-it-works" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.howItWorks')}</Link></li>
+                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.findDoctor')}</Link></li>
+                            <li><Link to="/reviews" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.reviews')}</Link></li>
                         </ul>
                     </div>
 
                     {/* Legal */}
                     <div>
-                        <h3 className="text-white font-bold mb-6 font-display">Legal & Support</h3>
+                        <h3 className="text-white font-bold mb-6 font-display">{t('footer.legal')}</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> Privacy Policy</a></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> Terms of Service</a></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> HIPAA Compliance</a></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> Help Center</a></li>
+                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.privacy')}</a></li>
+                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.terms')}</a></li>
+                            <li><Link to="/hipaa-compliance" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.hipaa')}</Link></li>
+                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</a></li>
                         </ul>
                     </div>
 
                     {/* Contact */}
                     <div>
-                        <h3 className="text-white font-bold mb-6 font-display">Contact Us</h3>
+                        <h3 className="text-white font-bold mb-6 font-display">{t('footer.contact')}</h3>
                         <ul className="space-y-4 text-sm">
                             <li className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-secondary-500 shrink-0 mt-0.5" />
@@ -159,11 +162,11 @@ const Footer = () => {
             </div>
             <div className="border-t border-slate-800 bg-slate-950 py-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-                    <p>&copy; {new Date().getFullYear()} 2nd Opinion SaaS. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} {t('app.title')}. {t('footer.rights')}</p>
                     <div className="flex items-center gap-1">
-                        <span>Made with</span>
+                        <span>{t('footer.madeWith')}</span>
                         <Heart className="h-3 w-3 text-red-500 fill-red-500 animate-pulse" />
-                        <span>for better healthcare.</span>
+                        <span>{t('footer.forHealth')}</span>
                     </div>
                 </div>
             </div>
@@ -191,6 +194,9 @@ const App = () => {
         <Layout>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/hipaa-compliance" element={<HipaaCompliance />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/reviews" element={<Reviews />} />
             <Route 
               path="/patient" 
               element={

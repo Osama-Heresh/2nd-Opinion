@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { UserRole, CaseStatus } from '../types';
-import { Trash2, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Trash2, FileText, CheckCircle, Clock, AlertCircle, Search, Filter } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { users, cases, transactions, resetDemo } = useApp();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
   const totalRevenue = transactions
     .filter(t => t.type === 'CASE_FEE')
@@ -36,8 +38,15 @@ const AdminDashboard = () => {
     }))
     .sort((a,b) => b.cases - a.cases);
 
-  // Sorted cases for table
-  const sortedCases = [...cases].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Sorted and Filtered cases for table
+  const filteredCases = [...cases]
+    .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .filter(c => {
+      const matchesSearch = c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            c.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'ALL' || c.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
 
   return (
     <div className="space-y-8">
@@ -122,8 +131,35 @@ const AdminDashboard = () => {
 
       {/* Recent Cases Log */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200">
+          <div className="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h3 className="font-bold text-slate-800">Recent Case Submissions</h3>
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                   <div className="relative w-full sm:w-48">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                          <Filter className="h-4 w-4" />
+                      </div>
+                      <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none appearance-none bg-white cursor-pointer"
+                      >
+                          <option value="ALL">All Statuses</option>
+                          <option value={CaseStatus.OPEN}>Open</option>
+                          <option value={CaseStatus.CLOSED}>Closed</option>
+                          <option value={CaseStatus.PENDING_INFO}>Pending Info</option>
+                      </select>
+                  </div>
+                  <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input 
+                          type="text"
+                          placeholder="Search patient or ID..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                      />
+                  </div>
+              </div>
           </div>
           <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
@@ -138,7 +174,7 @@ const AdminDashboard = () => {
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                      {sortedCases.map(c => {
+                      {filteredCases.map(c => {
                           const doctor = users.find(u => u.id === c.assignedDoctorId || u.id === c.opinion?.doctorId);
                           return (
                             <tr key={c.id} className="hover:bg-slate-50 transition">
@@ -170,6 +206,13 @@ const AdminDashboard = () => {
                             </tr>
                           )
                       })}
+                      {filteredCases.length === 0 && (
+                          <tr>
+                              <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                                  No cases found matching filters.
+                              </td>
+                          </tr>
+                      )}
                   </tbody>
               </table>
           </div>

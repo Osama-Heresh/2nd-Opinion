@@ -25,7 +25,11 @@ const Landing = () => {
 
   const topDoctors = users
     .filter(u => u.role === UserRole.DOCTOR)
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    .sort((a, b) => {
+        const scoreA = ((a.casesClosed || 0) * 10) + (a.bonusPoints || 0);
+        const scoreB = ((b.casesClosed || 0) * 10) + (b.bonusPoints || 0);
+        return scoreB - scoreA;
+    })
     .slice(0, 3);
 
   return (
@@ -227,6 +231,7 @@ const Landing = () => {
                                 {doc.rating}
                             </div>
                             <span className="text-xs text-slate-400">{doc.casesClosed} cases closed</span>
+                            {(doc.bonusPoints || 0) > 0 && <span className="text-xs text-purple-600 font-medium">+{doc.bonusPoints} bonus pts</span>}
                         </div>
                     </div>
                 ))}

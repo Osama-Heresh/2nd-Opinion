@@ -34,6 +34,7 @@ export interface User {
   rating?: number;
   casesClosed?: number;
   linkedin?: string;
+  bonusPoints?: number;
 }
 
 export interface CaseFile {
