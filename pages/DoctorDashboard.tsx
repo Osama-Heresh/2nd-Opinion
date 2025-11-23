@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
 
 const DoctorDashboard = () => {
@@ -74,7 +74,7 @@ const DoctorDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Stats Header */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
            <div>
               <p className="text-sm text-slate-500 font-medium">Wallet Balance</p>
@@ -103,6 +103,15 @@ const DoctorDashboard = () => {
            </div>
            <div className="bg-yellow-100 p-3 rounded-full">
                <Trophy className="h-6 w-6 text-yellow-600" />
+           </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+           <div>
+              <p className="text-sm text-slate-500 font-medium">Avg. Rating</p>
+              <p className="text-3xl font-bold text-slate-900">{currentUser?.rating?.toFixed(1) || 'N/A'}</p>
+           </div>
+           <div className="bg-orange-100 p-3 rounded-full">
+               <Star className="h-6 w-6 text-orange-600" />
            </div>
         </div>
       </div>

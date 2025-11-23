@@ -14,6 +14,7 @@ interface AppContextType {
   toggleLanguage: () => void;
   createCase: (newCase: Partial<Case>) => Promise<boolean>;
   submitOpinion: (caseId: string, opinion: Opinion) => Promise<void>;
+  rateDoctor: (caseId: string, rating: number) => void;
   depositFunds: (amount: number) => void;
   resetDemo: () => void;
 }
@@ -161,8 +162,13 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     }));
 
     if (opinion.decision !== 'MoreTests') {
-        // Payout to Doctor
-        const updatedDoctor = { ...currentUser, walletBalance: currentUser.walletBalance + DOCTOR_PAYOUT, casesClosed: (currentUser.casesClosed || 0) + 1 };
+        // Payout to Doctor and increment cases closed
+        const updatedDoctor = { 
+          ...currentUser, 
+          walletBalance: currentUser.walletBalance + DOCTOR_PAYOUT, 
+          casesClosed: (currentUser.casesClosed || 0) + 1 
+        };
+        
         setCurrentUser(updatedDoctor);
         setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedDoctor : u));
 
@@ -176,10 +182,36 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             description: `Payout for Case #${caseId}`
         };
         setTransactions(prev => [tx, ...prev]);
-
-        // Platform Commission (Log only)
-        // In a real DB, update Admin balance here too.
     }
+  };
+
+  const rateDoctor = (caseId: string, rating: number) => {
+    // 1. Update the Case with the new rating
+    let doctorId: string | undefined;
+
+    const updatedCases = cases.map(c => {
+        if (c.id === caseId) {
+            doctorId = c.opinion?.doctorId;
+            return { ...c, patientRating: rating };
+        }
+        return c;
+    });
+    setCases(updatedCases);
+
+    if (!doctorId) return;
+
+    // 2. Recalculate Doctor's Average Rating
+    const doctorCases = updatedCases.filter(c => c.opinion?.doctorId === doctorId && c.patientRating);
+    const totalRating = doctorCases.reduce((acc, c) => acc + (c.patientRating || 0), 0);
+    const newAverage = doctorCases.length > 0 ? totalRating / doctorCases.length : rating;
+
+    // 3. Update the Doctor User Object
+    setUsers(prev => prev.map(u => {
+        if (u.id === doctorId) {
+            return { ...u, rating: parseFloat(newAverage.toFixed(1)) };
+        }
+        return u;
+    }));
   };
 
   return (
@@ -195,6 +227,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       toggleLanguage,
       createCase,
       submitOpinion,
+      rateDoctor,
       depositFunds,
       resetDemo
     }}>

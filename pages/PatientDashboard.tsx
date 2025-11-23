@@ -5,7 +5,7 @@ import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, 
 import { refineSymptoms } from '../services/geminiService';
 
 const PatientDashboard = () => {
-  const { currentUser, cases, createCase, t, depositFunds, users } = useApp();
+  const { currentUser, cases, createCase, t, depositFunds, users, rateDoctor } = useApp();
   const [activeTab, setActiveTab] = useState<'new' | 'list' | 'doctors'>('new');
   const [selectedDoctor, setSelectedDoctor] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -335,6 +335,31 @@ const PatientDashboard = () => {
                                 </div>
                                 <div className="text-sm font-bold mb-1 text-slate-700">Decision: {c.opinion.decision}</div>
                                 <p className="text-slate-800 text-sm italic">"{c.opinion.notes}"</p>
+                            </div>
+                        )}
+
+                        {/* Rating UI for Closed Cases */}
+                        {c.status === CaseStatus.CLOSED && c.opinion && !c.patientRating && (
+                             <div className="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
+                                <p className="text-sm font-bold text-slate-700 mb-2">How was your experience?</p>
+                                <div className="flex gap-2">
+                                    {[1,2,3,4,5].map(star => (
+                                        <button 
+                                            key={star} 
+                                            onClick={() => rateDoctor(c.id, star)}
+                                            className="p-1 hover:scale-110 transition group"
+                                            title={`Rate ${star} Stars`}
+                                        >
+                                            <Star className="h-6 w-6 text-yellow-300 hover:text-yellow-500 fill-current" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {c.patientRating && (
+                            <div className="mt-4 flex items-center gap-2 text-sm font-bold text-yellow-600">
+                                <Star className="h-4 w-4 fill-current" />
+                                <span>You rated this consultation {c.patientRating}/5</span>
                             </div>
                         )}
                     </div>
