@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus, User } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award } from 'lucide-react';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
 
 const DoctorDashboard = () => {
-  const { currentUser, cases, users, submitOpinion } = useApp();
-  const [activeTab, setActiveTab] = useState<'available' | 'closed'>('available');
+  const { currentUser, cases, users, submitOpinion, updateUserProfile, t } = useApp();
+  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'settings'>('available');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   
   // Review Form State
@@ -14,6 +15,17 @@ const DoctorDashboard = () => {
   const [decision, setDecision] = useState<'Agree'|'Disagree'|'MoreTests'>('Agree');
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
+
+  // Settings Form State
+  const [settingsForm, setSettingsForm] = useState({
+      avatarUrl: '',
+      bio: '',
+      hospital: '',
+      country: '',
+      linkedin: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Derived Data
   const availableCases = cases.filter(c => 
@@ -43,6 +55,19 @@ const DoctorDashboard = () => {
   useEffect(() => {
     setSelectedCase(null);
   }, [activeTab]);
+
+  // Load current user data into settings form when settings tab is active
+  useEffect(() => {
+    if (activeTab === 'settings' && currentUser) {
+        setSettingsForm({
+            avatarUrl: currentUser.avatarUrl || '',
+            bio: currentUser.bio || '',
+            hospital: currentUser.hospital || '',
+            country: currentUser.country || '',
+            linkedin: currentUser.linkedin || ''
+        });
+    }
+  }, [activeTab, currentUser]);
 
   useEffect(() => {
     let isMounted = true;
@@ -81,6 +106,28 @@ const DoctorDashboard = () => {
     });
     setSelectedCase(null);
     setActiveTab('closed'); // Switch to history to see the result
+  };
+
+  const handleSimulateAvatarUpload = () => {
+    // Pick a random doctor avatar for demo purposes
+    const randomId = Math.floor(Math.random() * 70) + 1;
+    const fakeUrl = `https://i.pravatar.cc/300?img=${randomId}`;
+    setSettingsForm({ ...settingsForm, avatarUrl: fakeUrl });
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      setIsSaving(true);
+      setSaveSuccess(false);
+
+      // Simulate API delay
+      setTimeout(async () => {
+          await updateUserProfile(currentUser.id, settingsForm);
+          setIsSaving(false);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 3000);
+      }, 800);
   };
 
   return (
@@ -126,98 +173,224 @@ const DoctorDashboard = () => {
                <Star className="h-6 w-6 text-orange-600" />
            </div>
         </div>
-        {/* Bonus Points Card */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-           <div>
-              <p className="text-sm text-slate-500 font-medium">Bonus Points</p>
-              <p className="text-3xl font-bold text-slate-900">{currentUser?.bonusPoints || 0}</p>
-           </div>
-           <div className="bg-purple-100 p-3 rounded-full">
-               <Award className="h-6 w-6 text-purple-600" />
-           </div>
-        </div>
+        {/* Settings Button */}
+        <button 
+           onClick={() => setActiveTab('settings')}
+           className={`p-6 rounded-xl shadow-sm border flex flex-col items-center justify-center gap-2 transition ${activeTab === 'settings' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+        >
+            <Settings className="h-6 w-6" />
+            <span className="text-xs font-bold uppercase">{t('settings.title')}</span>
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* List Column */}
+        {/* Left Column */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-[650px] flex flex-col">
-            {/* Tabs */}
-           <div className="flex border-b border-slate-200">
-               <button 
-                 onClick={() => setActiveTab('available')}
-                 className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'available' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
-               >
-                   Available ({availableCases.length})
-               </button>
-               <button 
-                 onClick={() => setActiveTab('closed')}
-                 className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'closed' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
-               >
-                   My History ({myClosedCases.length})
-               </button>
-           </div>
+           {activeTab !== 'settings' ? (
+             <>
+                {/* Tabs */}
+                <div className="flex border-b border-slate-200">
+                    <button 
+                        onClick={() => setActiveTab('available')}
+                        className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'available' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
+                    >
+                        Available ({availableCases.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('closed')}
+                        className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'closed' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
+                    >
+                        My History ({myClosedCases.length})
+                    </button>
+                </div>
 
-           {/* List */}
-           <div className="overflow-y-auto flex-1 p-2 space-y-2 bg-slate-50/50">
-               {activeTab === 'available' ? (
-                   availableCases.length === 0 ? (
-                       <div className="text-center py-12 px-4">
-                           <div className="bg-slate-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
-                               <Check className="h-8 w-8 text-slate-400" />
-                           </div>
-                           <p className="text-slate-500 font-medium">No new cases.</p>
-                           <p className="text-xs text-slate-400 mt-1">Great job! You're all caught up.</p>
-                       </div>
-                   ) : (
-                       availableCases.map(c => (
-                           <div 
-                            key={c.id} 
-                            onClick={() => handleSelectCase(c)}
-                            className={`p-4 rounded-lg border cursor-pointer transition group ${selectedCase?.id === c.id ? 'border-primary-500 bg-white shadow-md ring-1 ring-primary-100' : 'border-slate-200 bg-white hover:border-primary-300'}`}
-                           >
-                               <div className="flex justify-between items-start mb-2">
-                                   <span className="font-bold text-slate-800">{c.patientName}</span>
-                                   <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{new Date(c.createdAt).toLocaleDateString()}</span>
-                               </div>
-                               <p className="text-xs text-slate-600 line-clamp-2 mb-3">{c.symptoms}</p>
-                               <div className="flex items-center justify-between">
-                                  <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100 flex items-center gap-1">
-                                    <DollarSign className="h-3 w-3" /> $28.00
-                                  </span>
-                                  <ChevronRight className={`h-4 w-4 text-slate-300 transition ${selectedCase?.id === c.id ? 'text-primary-500' : 'group-hover:text-primary-400'}`} />
-                               </div>
-                           </div>
-                       ))
-                   )
-               ) : (
-                   myClosedCases.length === 0 ? (
-                       <div className="text-center py-12 px-4">
-                           <p className="text-slate-400">No history yet.</p>
-                       </div>
-                   ) : (
-                        myClosedCases.map(c => (
-                           <div 
-                            key={c.id} 
-                            onClick={() => handleSelectCase(c)}
-                            className={`p-4 rounded-lg border cursor-pointer transition ${selectedCase?.id === c.id ? 'border-primary-500 bg-white shadow-md' : 'border-slate-200 bg-white opacity-75 hover:opacity-100'}`}
-                           >
-                               <div className="flex justify-between items-center mb-1">
-                                   <span className="font-bold text-sm text-slate-700">{c.patientName}</span>
-                                   {c.opinion?.decision === 'Agree' && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">Agreed</span>}
-                                   {c.opinion?.decision === 'Disagree' && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">Disagreed</span>}
-                                   {c.opinion?.decision === 'MoreTests' && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded font-bold">Info Req.</span>}
-                               </div>
-                               <div className="text-xs text-slate-400">Closed on {c.opinion?.createdAt ? new Date(c.opinion.createdAt).toLocaleDateString() : '-'}</div>
-                           </div>
-                       ))
-                   )
-               )}
-           </div>
+                {/* List */}
+                <div className="overflow-y-auto flex-1 p-2 space-y-2 bg-slate-50/50">
+                    {activeTab === 'available' ? (
+                        availableCases.length === 0 ? (
+                            <div className="text-center py-12 px-4">
+                                <div className="bg-slate-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                                    <Check className="h-8 w-8 text-slate-400" />
+                                </div>
+                                <p className="text-slate-500 font-medium">No new cases.</p>
+                                <p className="text-xs text-slate-400 mt-1">Great job! You're all caught up.</p>
+                            </div>
+                        ) : (
+                            availableCases.map(c => {
+                                const isDirect = c.assignedDoctorId === currentUser?.id;
+                                return (
+                                <div 
+                                    key={c.id} 
+                                    onClick={() => handleSelectCase(c)}
+                                    className={`p-4 rounded-lg border cursor-pointer transition group relative ${
+                                        selectedCase?.id === c.id 
+                                            ? 'border-primary-500 bg-white shadow-md ring-1 ring-primary-100' 
+                                            : isDirect 
+                                                ? 'border-purple-200 bg-purple-50/50 hover:border-purple-300' 
+                                                : 'border-slate-200 bg-white hover:border-primary-300'
+                                    }`}
+                                >
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-800">{c.patientName}</span>
+                                            {isDirect && (
+                                                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                                                    <Star className="h-3 w-3 fill-purple-700" /> Direct Request
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded whitespace-nowrap">{new Date(c.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 line-clamp-2 mb-3">{c.symptoms}</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100 flex items-center gap-1">
+                                            <DollarSign className="h-3 w-3" /> $28.00
+                                        </span>
+                                        <ChevronRight className={`h-4 w-4 text-slate-300 transition ${selectedCase?.id === c.id ? 'text-primary-500' : 'group-hover:text-primary-400'}`} />
+                                    </div>
+                                </div>
+                            )})
+                        )
+                    ) : (
+                        myClosedCases.length === 0 ? (
+                            <div className="text-center py-12 px-4">
+                                <p className="text-slate-400">No history yet.</p>
+                            </div>
+                        ) : (
+                                myClosedCases.map(c => (
+                                <div 
+                                    key={c.id} 
+                                    onClick={() => handleSelectCase(c)}
+                                    className={`p-4 rounded-lg border cursor-pointer transition ${selectedCase?.id === c.id ? 'border-primary-500 bg-white shadow-md' : 'border-slate-200 bg-white opacity-75 hover:opacity-100'}`}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-bold text-sm text-slate-700">{c.patientName}</span>
+                                        {c.opinion?.decision === 'Agree' && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">Agreed</span>}
+                                        {c.opinion?.decision === 'Disagree' && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">Disagreed</span>}
+                                        {c.opinion?.decision === 'MoreTests' && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded font-bold">Info Req.</span>}
+                                    </div>
+                                    <div className="text-xs text-slate-400">Closed on {c.opinion?.createdAt ? new Date(c.opinion.createdAt).toLocaleDateString() : '-'}</div>
+                                </div>
+                            ))
+                        )
+                    )}
+                </div>
+             </>
+           ) : (
+             <div className="p-4 bg-slate-50 h-full flex flex-col">
+                 <div className="font-bold text-slate-900 mb-4 px-2">Profile Management</div>
+                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-primary-500 text-primary-700 font-bold text-sm mb-2 shadow-sm">
+                     Edit Profile
+                 </button>
+                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 text-sm hover:bg-slate-100 transition" disabled>
+                     Change Password (N/A)
+                 </button>
+                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 text-sm hover:bg-slate-100 transition mt-2" disabled>
+                     Notification Preferences (N/A)
+                 </button>
+             </div>
+           )}
         </div>
 
-        {/* Detail Column */}
+        {/* Right Column (Detail or Settings Form) */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[650px] overflow-y-auto flex flex-col relative">
-            {selectedCase ? (
+            {activeTab === 'settings' ? (
+                <div className="max-w-xl mx-auto w-full">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <Settings className="h-6 w-6 text-slate-400" />
+                        {t('settings.title')}
+                    </h2>
+
+                    {saveSuccess && (
+                        <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5" />
+                            {t('settings.success')}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSaveSettings} className="space-y-6">
+                        {/* Avatar Section */}
+                        <div className="flex items-center gap-6">
+                            <div className="relative">
+                                <img 
+                                    src={settingsForm.avatarUrl || "https://via.placeholder.com/150"} 
+                                    alt="Profile" 
+                                    className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-sm"
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={handleSimulateAvatarUpload}
+                                    className="absolute bottom-0 right-0 bg-white border border-slate-200 p-1.5 rounded-full shadow-sm hover:bg-slate-50"
+                                    title={t('settings.changePhoto')}
+                                >
+                                    <Upload className="h-4 w-4 text-slate-600" />
+                                </button>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-900">{currentUser?.name}</h3>
+                                <p className="text-slate-500 text-sm">{currentUser?.email}</p>
+                            </div>
+                        </div>
+
+                        {/* Bio */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth.bio')}</label>
+                            <textarea 
+                                value={settingsForm.bio}
+                                onChange={(e) => setSettingsForm({...settingsForm, bio: e.target.value})}
+                                rows={4}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
+                                placeholder="Describe your expertise..."
+                            />
+                        </div>
+
+                        {/* Hospital & Country */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth.hospital')}</label>
+                                <input 
+                                    type="text"
+                                    value={settingsForm.hospital}
+                                    onChange={(e) => setSettingsForm({...settingsForm, hospital: e.target.value})}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth.country')}</label>
+                                <input 
+                                    type="text"
+                                    value={settingsForm.country}
+                                    onChange={(e) => setSettingsForm({...settingsForm, country: e.target.value})}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* LinkedIn */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('auth.linkedin')}</label>
+                            <input 
+                                type="url"
+                                value={settingsForm.linkedin}
+                                onChange={(e) => setSettingsForm({...settingsForm, linkedin: e.target.value})}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                placeholder="https://linkedin.com/in/..."
+                            />
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-100 flex justify-end">
+                            <button 
+                                type="submit"
+                                disabled={isSaving}
+                                className="bg-primary-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-primary-700 transition flex items-center gap-2 disabled:opacity-70"
+                            >
+                                {isSaving ? <Loader2 className="animate-spin h-4 w-4" /> : <Save className="h-4 w-4" />}
+                                {t('settings.updateBtn')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            ) : selectedCase ? (
                 <>
                     <div className="flex-1">
                         {/* Header */}

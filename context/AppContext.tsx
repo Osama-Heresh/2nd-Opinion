@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Case, Transaction, UserRole, Language, CaseStatus, Opinion } from '../types';
 import { MOCK_USERS, MOCK_CASES, TRANSLATIONS, CASE_FEE, DOCTOR_PAYOUT, PLATFORM_FEE } from '../constants';
@@ -9,8 +10,12 @@ interface AppContextType {
   transactions: Transaction[];
   language: Language;
   t: (key: string) => string;
-  login: (email: string) => void;
+  login: (email: string, password?: string) => Promise<string | null>; // Returns error string or null
   logout: () => void;
+  register: (user: Partial<User>) => Promise<boolean>;
+  updateUserStatus: (userId: string, isApproved: boolean) => void;
+  updateUserProfile: (userId: string, updates: Partial<User>) => Promise<void>;
+  deleteUser: (userId: string) => void;
   toggleLanguage: () => void;
   createCase: (newCase: Partial<Case>) => Promise<boolean>;
   submitOpinion: (caseId: string, opinion: Opinion) => Promise<void>;
@@ -72,12 +77,78 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     setLanguage(prev => prev === 'en' ? 'ar' : 'en');
   };
 
-  const login = (email: string) => {
+  const login = async (email: string, password?: string): Promise<string | null> => {
     const user = users.find(u => u.email === email);
-    if (user) setCurrentUser(user);
+    
+    if (!user) {
+        return "User not found.";
+    }
+
+    if (password && user.password && user.password !== password) {
+        return "Invalid password.";
+    }
+
+    if (!user.isApproved) {
+        return "Your account is pending admin approval.";
+    }
+
+    setCurrentUser(user);
+    return null; // No error
   };
 
   const logout = () => setCurrentUser(null);
+
+  const register = async (userData: Partial<User>): Promise<boolean> => {
+     if (users.find(u => u.email === userData.email)) {
+         return false; // User exists
+     }
+
+     const newUser: User = {
+         id: `u-${Date.now()}`,
+         name: userData.name || 'New User',
+         email: userData.email || '',
+         password: userData.password || 'password123',
+         role: userData.role || UserRole.PATIENT,
+         walletBalance: 0,
+         avatarUrl: 'https://via.placeholder.com/200',
+         isApproved: userData.role === UserRole.PATIENT, // Patients auto-approve, doctors need approval
+         createdAt: new Date().toISOString(),
+         ...userData // Spread ensures fields like linkedin, bio, etc are included
+     };
+
+     setUsers(prev => [...prev, newUser]);
+     // Log them in immediately if patient, else wait for approval
+     if (newUser.isApproved) {
+         setCurrentUser(newUser);
+     }
+     return true;
+  };
+
+  const updateUserStatus = (userId: string, isApproved: boolean) => {
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
+  };
+
+  const updateUserProfile = async (userId: string, updates: Partial<User>) => {
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        return { ...u, ...updates };
+      }
+      return u;
+    });
+    
+    setUsers(updatedUsers);
+    
+    // If updating self, update currentUser state too
+    if (currentUser && currentUser.id === userId) {
+      setCurrentUser({ ...currentUser, ...updates });
+    }
+  };
+
+  const deleteUser = (userId: string) => {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      // Also cleanup auth if deleting self (rare)
+      if (currentUser?.id === userId) logout();
+  };
 
   const resetDemo = () => {
     localStorage.clear();
@@ -229,6 +300,10 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       t,
       login,
       logout,
+      register,
+      updateUserStatus,
+      updateUserProfile,
+      deleteUser,
       toggleLanguage,
       createCase,
       submitOpinion,

@@ -1,3 +1,4 @@
+
 import { User, UserRole, Specialty, Case, CaseStatus, Translation } from './types';
 
 export const APP_NAME = "2nd Opinion";
@@ -11,14 +12,18 @@ export const MOCK_USERS: User[] = [
     id: 'p1',
     name: 'Ahmed Al-Sayed',
     email: 'ahmed@example.com',
+    password: 'password123',
     role: UserRole.PATIENT,
     walletBalance: 100.00,
-    avatarUrl: 'https://picsum.photos/id/1005/200/200'
+    avatarUrl: 'https://picsum.photos/id/1005/200/200',
+    isApproved: true,
+    createdAt: new Date().toISOString()
   },
   {
     id: 'd1',
     name: 'Dr. Sarah Smith',
     email: 'sarah@clinic.com',
+    password: 'password123',
     role: UserRole.DOCTOR,
     walletBalance: 560.00,
     specialty: Specialty.CARDIOLOGY,
@@ -28,12 +33,16 @@ export const MOCK_USERS: User[] = [
     casesClosed: 42,
     avatarUrl: 'https://picsum.photos/id/1011/200/200',
     linkedin: 'https://www.linkedin.com/',
-    bonusPoints: 120
+    bio: 'Experienced Cardiologist with over 15 years in interventional cardiology. Dedicated to patient education and preventive care.',
+    bonusPoints: 120,
+    isApproved: true,
+    createdAt: new Date().toISOString()
   },
   {
     id: 'd2',
     name: 'Dr. Karim Nader',
     email: 'karim@hospital.ae',
+    password: 'password123',
     role: UserRole.DOCTOR,
     walletBalance: 1200.00,
     specialty: Specialty.DERMATOLOGY,
@@ -43,15 +52,21 @@ export const MOCK_USERS: User[] = [
     casesClosed: 89,
     avatarUrl: 'https://picsum.photos/id/1025/200/200',
     linkedin: 'https://www.linkedin.com/',
-    bonusPoints: 350
+    bio: 'Specializing in complex dermatological conditions and immunotherapy. Board certified in both UAE and UK.',
+    bonusPoints: 350,
+    isApproved: true,
+    createdAt: new Date().toISOString()
   },
   {
     id: 'a1',
     name: 'Admin User',
     email: 'admin@2ndopinion.com',
+    password: 'admin',
     role: UserRole.ADMIN,
     walletBalance: 5000.00, // Platform revenue wallet
-    avatarUrl: 'https://picsum.photos/id/1025/200/200'
+    avatarUrl: 'https://picsum.photos/id/1025/200/200',
+    isApproved: true,
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -118,6 +133,34 @@ export const TRANSLATIONS: Translation = {
   "link.hipaa": { en: "HIPAA Compliance", ar: "الامتثال لقانون HIPAA" },
   "link.help": { en: "Help Center", ar: "مركز المساعدة" },
 
+  // Auth
+  "auth.loginTitle": { en: "Welcome Back", ar: "مرحباً بعودتك" },
+  "auth.loginDesc": { en: "Enter your credentials to access your account.", ar: "أدخل بيانات اعتمادك للوصول إلى حسابك." },
+  "auth.email": { en: "Email Address", ar: "البريد الإلكتروني" },
+  "auth.password": { en: "Password", ar: "كلمة المرور" },
+  "auth.submitLogin": { en: "Sign In", ar: "تسجيل الدخول" },
+  "auth.noAccount": { en: "Don't have an account?", ar: "ليس لديك حساب؟" },
+  "auth.registerLink": { en: "Register Now", ar: "سجل الآن" },
+  "auth.registerTitle": { en: "Create Account", ar: "إنشاء حساب" },
+  "auth.registerPatient": { en: "I am a Patient", ar: "أنا مريض" },
+  "auth.registerDoctor": { en: "I am a Doctor", ar: "أنا طبيب" },
+  "auth.fullName": { en: "Full Name", ar: "الاسم الكامل" },
+  "auth.specialty": { en: "Specialty", ar: "التخصص" },
+  "auth.hospital": { en: "Current Hospital", ar: "المستشفى الحالي" },
+  "auth.country": { en: "Country", ar: "الدولة" },
+  "auth.linkedin": { en: "LinkedIn Profile URL", ar: "رابط ملف LinkedIn" },
+  "auth.bio": { en: "Short Bio", ar: "نبذة مختصرة" },
+  "auth.photo": { en: "Profile Photo", ar: "صورة الملف الشخصي" },
+  "auth.submitRegister": { en: "Create Account", ar: "إنشاء حساب" },
+  "auth.alreadyAccount": { en: "Already have an account?", ar: "لديك حساب بالفعل؟" },
+  "auth.loginLink": { en: "Login here", ar: "سجل الدخول هنا" },
+
+  // Settings
+  "settings.title": { en: "Profile Settings", ar: "إعدادات الملف الشخصي" },
+  "settings.updateBtn": { en: "Update Profile", ar: "تحديث الملف الشخصي" },
+  "settings.success": { en: "Profile updated successfully.", ar: "تم تحديث الملف الشخصي بنجاح." },
+  "settings.changePhoto": { en: "Change Photo", ar: "تغيير الصورة" },
+
   // Landing Page
   "landing.trusted": { en: "Trusted by 10,000+ Patients", ar: "موثوق من قبل أكثر من 10,000 مريض" },
   "landing.heroTitle1": { en: "Expert Medical", ar: "استشارات طبية" },
@@ -169,7 +212,9 @@ export const TRANSLATIONS: Translation = {
   "ai.refine": { en: "AI Refine", ar: "تحسين النص" },
 
   // Admin Dashboard
-  "admin.title": { en: "Admin Overview", ar: "نظرة عامة للمسؤول" },
+  "admin.title": { en: "Admin Dashboard", ar: "لوحة تحكم المسؤول" },
+  "admin.tab.overview": { en: "Overview", ar: "نظرة عامة" },
+  "admin.tab.users": { en: "User Management", ar: "إدارة المستخدمين" },
   "admin.reset": { en: "Reset Demo Data", ar: "إعادة تعيين البيانات التجريبية" },
   "admin.kpi.totalCases": { en: "Total Cases", ar: "إجمالي الحالات" },
   "admin.kpi.activeDoctors": { en: "Active Doctors", ar: "الأطباء النشطون" },
@@ -188,6 +233,14 @@ export const TRANSLATIONS: Translation = {
   "admin.th.date": { en: "Date", ar: "التاريخ" },
   "admin.unassigned": { en: "Unassigned", ar: "غير معين" },
   "admin.noCases": { en: "No cases found matching filters.", ar: "لا توجد حالات تطابق الفلاتر." },
+  
+  // Admin User Management
+  "admin.users.search": { en: "Search users...", ar: "بحث عن مستخدمين..." },
+  "admin.users.approve": { en: "Approve", ar: "موافقة" },
+  "admin.users.reject": { en: "Reject", ar: "رفض" },
+  "admin.users.delete": { en: "Delete", ar: "حذف" },
+  "admin.users.pending": { en: "Pending Approval", ar: "بانتظار الموافقة" },
+  "admin.users.active": { en: "Active", ar: "نشط" },
 
   // HIPAA Page
   "hipaa.badge": { en: "Security First Platform", ar: "منصة الأمان أولاً" },

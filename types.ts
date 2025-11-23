@@ -1,3 +1,4 @@
+
 export enum UserRole {
   PATIENT = 'PATIENT',
   DOCTOR = 'DOCTOR',
@@ -24,9 +25,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string; // In real app, this is hashed. Plaintext for demo.
   role: UserRole;
   walletBalance: number;
   avatarUrl?: string;
+  isApproved: boolean; // For Doctors needing admin approval
+  createdAt: string;
   // Doctor specific
   specialty?: Specialty;
   hospital?: string;
@@ -34,6 +38,7 @@ export interface User {
   rating?: number;
   casesClosed?: number;
   linkedin?: string;
+  bio?: string;
   bonusPoints?: number;
 }
 

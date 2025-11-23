@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
@@ -9,6 +10,8 @@ import HipaaCompliance from './pages/HipaaCompliance';
 import HowItWorks from './pages/HowItWorks';
 import Reviews from './pages/Reviews';
 import FindDoctors from './pages/FindDoctors';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import { UserRole } from './types';
 import { 
   Activity, Languages, LogOut, Wallet, 
@@ -31,7 +34,7 @@ const ScrollToTop = () => {
 // Protected Route Component
 const ProtectedRoute = ({ children, role }: { children?: React.ReactNode, role?: UserRole }) => {
   const { currentUser } = useApp();
-  if (!currentUser) return <Navigate to="/" />;
+  if (!currentUser) return <Navigate to="/login" />;
   if (role && currentUser.role !== role) return <Navigate to="/" />;
   return <>{children}</>;
 };
@@ -95,8 +98,8 @@ const Header = () => {
                 </>
               ) : (
                 <div className="flex gap-3">
-                    <Link to="/" className="hidden md:block text-sm font-bold text-slate-600 hover:text-primary-600 px-3 py-2.5">{t('nav.login')}</Link>
-                    <Link to="/" className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-full hover:bg-primary-700 transition shadow-lg shadow-primary-200">{t('nav.getStarted')}</Link>
+                    <Link to="/login" className="hidden md:block text-sm font-bold text-slate-600 hover:text-primary-600 px-3 py-2.5">{t('nav.login')}</Link>
+                    <Link to="/register" className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-full hover:bg-primary-700 transition shadow-lg shadow-primary-200">{t('nav.getStarted')}</Link>
                 </div>
               )}
             </div>
@@ -211,6 +214,8 @@ const App = () => {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/find-doctors" element={<FindDoctors />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route 
               path="/patient" 
               element={
