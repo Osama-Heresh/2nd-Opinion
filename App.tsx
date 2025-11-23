@@ -12,6 +12,8 @@ import Reviews from './pages/Reviews';
 import FindDoctors from './pages/FindDoctors';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import { UserRole } from './types';
 import { 
   Activity, Languages, LogOut, Wallet, 
@@ -148,10 +150,10 @@ const Footer = () => {
                     <div>
                         <h3 className="text-white font-bold mb-6 font-display">{t('footer.legal')}</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.privacy')}</a></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.terms')}</a></li>
+                            <li><Link to="/privacy-policy" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.privacy')}</Link></li>
+                            <li><Link to="/terms-of-service" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.terms')}</Link></li>
                             <li><Link to="/hipaa-compliance" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.hipaa')}</Link></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</a></li>
+                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</Link></li>
                         </ul>
                     </div>
 
@@ -216,6 +218,8 @@ const App = () => {
             <Route path="/find-doctors" element={<FindDoctors />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route 
               path="/patient" 
               element={

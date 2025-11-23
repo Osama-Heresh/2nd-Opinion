@@ -313,4 +313,24 @@ export const TRANSLATIONS: Translation = {
   "findDoc.noResults": { en: "No specialists found matching your search.", ar: "لم يتم العثور على أطباء يطابقون بحثك." },
   "findDoc.location": { en: "Location", ar: "الموقع" },
   "findDoc.allLocations": { en: "All Locations", ar: "جميع المواقع" },
+
+  // Privacy Policy
+  "privacy.title": { en: "Privacy Policy", ar: "سياسة الخصوصية" },
+  "privacy.intro": { en: "At 2nd Opinion, we are committed to protecting your privacy and ensuring the security of your personal health information. This Privacy Policy outlines how we collect, use, and safeguard your data.", ar: "في الرأي الثاني، نحن ملتزمون بحماية خصوصيتك وضمان أمان معلوماتك الصحية الشخصية. توضح سياسة الخصوصية هذه كيفية جمع بياناتك واستخدامها وحمايتها." },
+  "privacy.collectionTitle": { en: "Information We Collect", ar: "المعلومات التي نجمعها" },
+  "privacy.collectionDesc": { en: "We collect personal information including name, email, medical history, and uploaded documents strictly for the purpose of providing second medical opinions.", ar: "نقوم بجمع المعلومات الشخصية بما في ذلك الاسم والبريد الإلكتروني والتاريخ الطبي والمستندات التي تم تحميلها بدقة لغرض تقديم آراء طبية ثانية." },
+  "privacy.usageTitle": { en: "How We Use Your Information", ar: "كيف نستخدم معلوماتك" },
+  "privacy.usageDesc": { en: "Your data is shared only with the medical specialists reviewing your case. Anonymized data may be used for platform analytics and improvement.", ar: "تتم مشاركة بياناتك فقط مع الأخصائيين الطبيين الذين يراجعون حالتك. قد يتم استخدام البيانات مجهولة المصدر لتحليلات المنصة وتحسينها." },
+  "privacy.securityTitle": { en: "Data Security", ar: "أمن البيانات" },
+  "privacy.securityDesc": { en: "We implement industry-standard encryption and security measures complying with HIPAA regulations to protect your data during transmission and storage.", ar: "نقوم بتطبيق معايير التشفير والأمان المتوافقة مع لوائح HIPAA لحماية بياناتك أثناء النقل والتخزين." },
+
+  // Terms of Service
+  "terms.title": { en: "Terms of Service", ar: "شروط الخدمة" },
+  "terms.intro": { en: "By accessing or using the 2nd Opinion platform, you agree to be bound by these Terms of Service.", ar: "من خلال الوصول إلى منصة الرأي الثاني أو استخدامها، فإنك توافق على الالتزام بشروط الخدمة هذه." },
+  "terms.servicesTitle": { en: "Our Services", ar: "خدماتنا" },
+  "terms.servicesDesc": { en: "2nd Opinion provides a platform for patients to obtain second medical opinions from qualified specialists. We do not provide direct medical treatment or emergency services.", ar: "توفر الرأي الثاني منصة للمرضى للحصول على آراء طبية ثانية من متخصصين مؤهلين. نحن لا نقدم علاجًا طبيًا مباشرًا أو خدمات طوارئ." },
+  "terms.disclaimerTitle": { en: "Medical Disclaimer", ar: "إخلاء المسؤولية الطبية" },
+  "terms.disclaimerDesc": { en: "The content and services provided on this platform are for informational purposes only and are not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician for any medical condition.", ar: "المحتوى والخدمات المقدمة على هذه المنصة للأغراض الإعلامية فقط وليست بديلاً عن المشورة الطبية المهنية أو التشخيص أو العلاج. اطلب دائمًا نصيحة طبيبك لأي حالة طبية." },
+  "terms.paymentTitle": { en: "Payments and Refunds", ar: "المدفوعات والمبالغ المستردة" },
+  "terms.paymentDesc": { en: "Fees for consultations are charged at the time of submission. Refunds are processed only if a case is cancelled before specialist review begins.", ar: "يتم فرض رسوم الاستشارات في وقت التقديم. تتم معالجة المبالغ المستردة فقط إذا تم إلغاء الحالة قبل بدء مراجعة الأخصائي." }
 };
