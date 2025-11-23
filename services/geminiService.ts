@@ -1,0 +1,48 @@
+import { GoogleGenAI } from "@google/genai";
+import { Case } from '../types';
+
+// Initialize Gemini Client
+// NOTE: In a production app, never expose API keys on the client. 
+// This is for demonstration purposes as requested by the persona guidance.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+
+export const refineSymptoms = async (rawText: string): Promise<string> => {
+  if (!rawText || rawText.length < 5) return rawText;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `You are a helpful medical assistant. Rewrite the following patient symptom description to be more clinical, clear, and concise for a doctor to read. Maintain the original meaning. \n\nPatient Input: "${rawText}"`,
+      config: {
+        thinkingConfig: { thinkingBudget: 0 } // Speed over deep thought for UI interaction
+      }
+    });
+    return response.text || rawText;
+  } catch (error) {
+    console.error("Gemini Refine Error:", error);
+    return rawText; // Fallback to original
+  }
+};
+
+export const analyzeCaseForDoctor = async (c: Case): Promise<string> => {
+  try {
+    const prompt = `
+      Act as a senior medical consultant. Analyze the following case data and provide a brief summary of potential differential diagnoses to consider. 
+      Do NOT provide a final diagnosis, just areas for the doctor to investigate.
+      
+      Specialty: ${c.specialty}
+      Symptoms: ${c.symptoms}
+      Patient Name: ${c.patientName}
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    return response.text || "AI Analysis unavailable.";
+  } catch (error) {
+    console.error("Gemini Analysis Error:", error);
+    return "Could not generate AI analysis at this time.";
+  }
+};
