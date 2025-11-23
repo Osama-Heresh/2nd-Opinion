@@ -21,6 +21,7 @@ interface AppContextType {
   submitOpinion: (caseId: string, opinion: Opinion, isRare?: boolean) => Promise<void>;
   rateDoctor: (caseId: string, rating: number, feedback?: string) => void;
   depositFunds: (amount: number) => void;
+  withdrawFunds: (amount: number) => Promise<boolean>;
   resetDemo: () => void;
 }
 
@@ -175,6 +176,28 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     setTransactions(prev => [tx, ...prev]);
   };
 
+  const withdrawFunds = async (amount: number): Promise<boolean> => {
+      if (!currentUser) return false;
+      if (currentUser.walletBalance < amount) return false;
+
+      // Deduct funds
+      const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance - amount };
+      setCurrentUser(updatedUser);
+      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+
+      // Log transaction
+      const tx: Transaction = {
+        id: `tx-wd-${Date.now()}`,
+        userId: currentUser.id,
+        amount: -amount,
+        type: 'PAYOUT', // Reusing PAYOUT type, or could add WITHDRAWAL
+        timestamp: new Date().toISOString(),
+        description: 'Funds Withdrawal'
+      };
+      setTransactions(prev => [tx, ...prev]);
+      return true;
+  };
+
   const createCase = async (caseData: Partial<Case>): Promise<boolean> => {
     if (!currentUser || currentUser.role !== UserRole.PATIENT) return false;
 
@@ -310,6 +333,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       submitOpinion,
       rateDoctor,
       depositFunds,
+      withdrawFunds,
       resetDemo
     }}>
       {children}

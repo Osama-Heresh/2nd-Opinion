@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { UserRole, CaseStatus } from '../types';
-import { Trash2, FileText, CheckCircle, Clock, AlertCircle, Search, Filter, Users, XCircle, UserCheck } from 'lucide-react';
+import { Trash2, FileText, CheckCircle, Clock, AlertCircle, Search, Filter, Users, XCircle, UserCheck, DollarSign, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { users, cases, transactions, resetDemo, updateUserStatus, deleteUser, t } = useApp();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'financials'>('overview');
   
   // Overview State
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +15,9 @@ const AdminDashboard = () => {
 
   // Users Tab State
   const [userSearch, setUserSearch] = useState('');
+
+  // Financial Tab State
+  const [txSearch, setTxSearch] = useState('');
 
   const totalRevenue = transactions
     .filter(t => t.type === 'CASE_FEE')
@@ -61,6 +64,15 @@ const AdminDashboard = () => {
     u.email.toLowerCase().includes(userSearch.toLowerCase())
   );
 
+  // Transaction Filtering
+  const filteredTransactions = transactions
+    .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .filter(tx => {
+        const user = users.find(u => u.id === tx.userId);
+        const userName = user ? user.name.toLowerCase() : '';
+        return tx.id.toLowerCase().includes(txSearch.toLowerCase()) || userName.includes(txSearch.toLowerCase());
+    });
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -78,6 +90,12 @@ const AdminDashboard = () => {
                     className={`pb-2 text-sm font-bold border-b-2 transition ${activeTab === 'users' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
                 >
                     {t('admin.tab.users')}
+                </button>
+                <button 
+                    onClick={() => setActiveTab('financials')}
+                    className={`pb-2 text-sm font-bold border-b-2 transition ${activeTab === 'financials' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                >
+                    {t('admin.tab.financials')}
                 </button>
             </div>
         </div>
@@ -251,6 +269,80 @@ const AdminDashboard = () => {
             </div>
         </div>
       </>
+      ) : activeTab === 'financials' ? (
+        <>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                        <DollarSign className="h-5 w-5 text-slate-500" />
+                        {t('admin.fin.title')}
+                    </h3>
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input 
+                            type="text"
+                            placeholder={t('admin.fin.search')}
+                            value={txSearch}
+                            onChange={(e) => setTxSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 font-medium">
+                            <tr>
+                                <th className="px-6 py-3">{t('admin.th.transId')}</th>
+                                <th className="px-6 py-3">{t('admin.th.user')}</th>
+                                <th className="px-6 py-3">{t('admin.th.type')}</th>
+                                <th className="px-6 py-3">{t('admin.th.date')}</th>
+                                <th className="px-6 py-3 text-right">{t('admin.th.amount')}</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {filteredTransactions.map(tx => {
+                                const user = users.find(u => u.id === tx.userId);
+                                return (
+                                    <tr key={tx.id} className="hover:bg-slate-50 transition">
+                                        <td className="px-6 py-4 font-mono text-xs text-slate-400">{tx.id}</td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">
+                                            {user ? (
+                                                <div className="flex items-center gap-2">
+                                                    <img src={user.avatarUrl} className="w-6 h-6 rounded-full" alt="" />
+                                                    {user.name}
+                                                </div>
+                                            ) : tx.userId}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-slate-600 text-xs font-bold uppercase tracking-wide">
+                                                {t(`tx.${tx.type}`) || tx.description}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-500">
+                                            {new Date(tx.timestamp).toLocaleString()}
+                                        </td>
+                                        <td className={`px-6 py-4 text-right font-bold flex justify-end items-center gap-1 ${
+                                            tx.amount > 0 ? 'text-green-600' : 'text-slate-600'
+                                        }`}>
+                                            {tx.amount > 0 ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3 text-slate-400" />}
+                                            {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                             {filteredTransactions.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        {t('admin.noCases')}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </>
       ) : (
       <>
         {/* Users Management */}

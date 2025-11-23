@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus, User } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen } from 'lucide-react';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen, Wallet, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
 
 const DoctorDashboard = () => {
-  const { currentUser, cases, users, submitOpinion, updateUserProfile, t } = useApp();
-  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'rare' | 'settings'>('available');
+  const { currentUser, cases, users, submitOpinion, updateUserProfile, t, transactions, withdrawFunds } = useApp();
+  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'rare' | 'settings' | 'wallet'>('available');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   
   // Review Form State
@@ -28,25 +28,21 @@ const DoctorDashboard = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Derived Data
+  const myTransactions = transactions.filter(tx => tx.userId === currentUser?.id);
+  const myClosedCases = cases.filter(c => c.opinion?.doctorId === currentUser?.id);
   const availableCases = cases.filter(c => 
     c.status === CaseStatus.OPEN && 
     (c.assignedDoctorId === currentUser?.id || (!c.assignedDoctorId && c.specialty === currentUser?.specialty))
   );
 
-  const myClosedCases = cases.filter(c => c.opinion?.doctorId === currentUser?.id);
-
-  // Rare Cases from ALL doctors (for community learning)
   const rareCases = cases.filter(c => c.isRare && c.status === CaseStatus.CLOSED);
 
-  // Rank Calculation Strategy: Score = (Cases * 10) + Bonus Points
+  // Rank Calculation
   const calculateScore = (u: User) => ((u.casesClosed || 0) * 10) + (u.bonusPoints || 0);
-  
   const doctors = users.filter(u => u.role === 'DOCTOR').sort((a,b) => calculateScore(b) - calculateScore(a));
   const myRank = doctors.findIndex(u => u.id === currentUser?.id) + 1;
   const myScore = currentUser ? calculateScore(currentUser) : 0;
   
-  // Calculate points needed for next rank
   let nextRankMessage = "";
   if (myRank > 1) {
       const prevDoc = doctors[myRank - 2];
@@ -60,7 +56,6 @@ const DoctorDashboard = () => {
     setSelectedCase(null);
   }, [activeTab]);
 
-  // Load current user data into settings form when settings tab is active
   useEffect(() => {
     if (activeTab === 'settings' && currentUser) {
         setSettingsForm({
@@ -110,11 +105,10 @@ const DoctorDashboard = () => {
         createdAt: new Date().toISOString()
     }, isRare);
     setSelectedCase(null);
-    setActiveTab('closed'); // Switch to history to see the result
+    setActiveTab('closed');
   };
 
   const handleSimulateAvatarUpload = () => {
-    // Pick a random doctor avatar for demo purposes
     const randomId = Math.floor(Math.random() * 70) + 1;
     const fakeUrl = `https://i.pravatar.cc/300?img=${randomId}`;
     setSettingsForm({ ...settingsForm, avatarUrl: fakeUrl });
@@ -125,8 +119,6 @@ const DoctorDashboard = () => {
       if (!currentUser) return;
       setIsSaving(true);
       setSaveSuccess(false);
-
-      // Simulate API delay
       setTimeout(async () => {
           await updateUserProfile(currentUser.id, settingsForm);
           setIsSaving(false);
@@ -135,11 +127,26 @@ const DoctorDashboard = () => {
       }, 800);
   };
 
+  const handleWithdraw = async () => {
+      if (!currentUser || currentUser.walletBalance <= 0) return;
+      
+      const confirmMsg = `Are you sure you want to withdraw $${currentUser.walletBalance.toFixed(2)} to your bank account?`;
+      if (window.confirm(confirmMsg)) {
+          const success = await withdrawFunds(currentUser.walletBalance);
+          if (success) {
+              alert("Withdrawal initiated successfully! Funds will appear in your account within 2-3 business days.");
+          }
+      }
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats Header */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+      <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-6">
+        <div 
+            onClick={() => setActiveTab('wallet')}
+            className={`bg-white p-6 rounded-xl shadow-sm border cursor-pointer transition flex items-center justify-between ${activeTab === 'wallet' ? 'border-primary-500 ring-1 ring-primary-100' : 'border-slate-200 hover:border-primary-300'}`}
+        >
            <div>
               <p className="text-sm text-slate-500 font-medium">Wallet Balance</p>
               <p className="text-3xl font-bold text-slate-900">${currentUser?.walletBalance.toFixed(2)}</p>
@@ -178,6 +185,14 @@ const DoctorDashboard = () => {
                <Star className="h-6 w-6 text-orange-600" />
            </div>
         </div>
+        {/* Wallet Button */}
+        <button 
+           onClick={() => setActiveTab('wallet')}
+           className={`p-6 rounded-xl shadow-sm border flex flex-col items-center justify-center gap-2 transition ${activeTab === 'wallet' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+        >
+            <Wallet className="h-6 w-6" />
+            <span className="text-xs font-bold uppercase">{t('wallet.title')}</span>
+        </button>
         {/* Settings Button */}
         <button 
            onClick={() => setActiveTab('settings')}
@@ -191,7 +206,7 @@ const DoctorDashboard = () => {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-[650px] flex flex-col">
-           {activeTab !== 'settings' ? (
+           {activeTab !== 'settings' && activeTab !== 'wallet' ? (
              <>
                 {/* Tabs */}
                 <div className="flex border-b border-slate-200 overflow-x-auto">
@@ -292,43 +307,30 @@ const DoctorDashboard = () => {
                             ))
                         )
                     ) : (
-                        // Rare Cases Community Tab
-                        rareCases.length === 0 ? (
-                            <div className="text-center py-12 px-4">
-                                <Sparkles className="h-10 w-10 text-purple-200 mx-auto mb-3" />
-                                <p className="text-slate-500 text-sm">No rare cases in the library yet.</p>
-                                <p className="text-xs text-slate-400 mt-1">Mark interesting cases as rare to share them here.</p>
-                            </div>
-                        ) : (
-                            rareCases.map(c => (
-                                <div 
-                                    key={c.id} 
-                                    onClick={() => handleSelectCase(c)}
-                                    className={`p-4 rounded-lg border cursor-pointer transition ${selectedCase?.id === c.id ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-300'}`}
-                                >
-                                    <div className="flex justify-between items-center mb-1">
-                                        <div className="flex items-center gap-1">
-                                             <Sparkles className="h-3 w-3 text-purple-600" />
-                                             <span className="font-bold text-sm text-purple-900">{t('doctor.anonymized')}</span>
-                                        </div>
-                                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{c.specialty}</span>
+                        rareCases.map(c => (
+                            <div 
+                                key={c.id} 
+                                onClick={() => handleSelectCase(c)}
+                                className={`p-4 rounded-lg border cursor-pointer transition ${selectedCase?.id === c.id ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-300'}`}
+                            >
+                                <div className="flex justify-between items-center mb-1">
+                                    <div className="flex items-center gap-1">
+                                            <Sparkles className="h-3 w-3 text-purple-600" />
+                                            <span className="font-bold text-sm text-purple-900">{t('doctor.anonymized')}</span>
                                     </div>
-                                    <p className="text-xs text-slate-600 line-clamp-2 italic mb-2">"{c.symptoms}"</p>
-                                    <div className="text-xs text-slate-400">By Dr. {c.opinion?.doctorName.split(' ').pop()}</div>
+                                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{c.specialty}</span>
                                 </div>
-                            ))
-                        )
+                                <p className="text-xs text-slate-600 line-clamp-2 italic mb-2">"{c.symptoms}"</p>
+                                <div className="text-xs text-slate-400">By Dr. {c.opinion?.doctorName.split(' ').pop()}</div>
+                            </div>
+                        ))
                     )}
                 </div>
              </>
            ) : (
-             <div className="p-4 bg-slate-50 h-full flex flex-col">
-                 <div className="font-bold text-slate-900 mb-4 px-2">Profile Management</div>
-                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-primary-500 text-primary-700 font-bold text-sm mb-2 shadow-sm">
-                     Edit Profile
-                 </button>
-                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 text-sm hover:bg-slate-100 transition" disabled>
-                     Change Password (N/A)
+             <div className="p-4 bg-slate-50 h-full flex flex-col gap-2">
+                 <button onClick={() => setActiveTab('available')} className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 text-sm hover:bg-slate-100 transition shadow-sm">
+                     Back to Cases
                  </button>
              </div>
            )}
@@ -336,7 +338,59 @@ const DoctorDashboard = () => {
 
         {/* Right Column (Detail or Settings Form) */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[650px] overflow-y-auto flex flex-col relative">
-            {activeTab === 'settings' ? (
+            {activeTab === 'wallet' ? (
+                <div className="max-w-xl mx-auto w-full">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <Wallet className="h-6 w-6 text-slate-400" />
+                        {t('wallet.title')}
+                    </h2>
+
+                    <div className="bg-slate-900 text-white rounded-xl p-8 mb-8 relative overflow-hidden">
+                        <div className="relative z-10">
+                            <p className="text-slate-400 text-sm font-medium uppercase mb-1">Available for Payout</p>
+                            <p className="text-5xl font-bold">${currentUser?.walletBalance.toFixed(2)}</p>
+                            <button 
+                                onClick={handleWithdraw}
+                                className="mt-6 bg-white text-slate-900 px-6 py-2 rounded-full font-bold text-sm hover:bg-slate-100 transition shadow-lg flex items-center gap-2"
+                            >
+                                <ArrowUpRight className="h-4 w-4" />
+                                {t('wallet.withdraw')}
+                            </button>
+                        </div>
+                        <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/3 translate-y-1/3">
+                            <DollarSign className="h-64 w-64" />
+                        </div>
+                    </div>
+
+                    <h3 className="font-bold text-slate-900 mb-4">{t('wallet.history')}</h3>
+                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-500 font-medium">
+                                <tr>
+                                    <th className="px-4 py-3">Date</th>
+                                    <th className="px-4 py-3">Description</th>
+                                    <th className="px-4 py-3 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {myTransactions.length === 0 ? (
+                                    <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-400">No earnings yet.</td></tr>
+                                ) : (
+                                    myTransactions.map(tx => (
+                                        <tr key={tx.id}>
+                                            <td className="px-4 py-3 text-slate-500">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                            <td className="px-4 py-3 font-medium text-slate-900">{t(`tx.${tx.type}`) || tx.description}</td>
+                                            <td className={`px-4 py-3 text-right font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : activeTab === 'settings' ? (
                 <div className="max-w-xl mx-auto w-full">
                     <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <Settings className="h-6 w-6 text-slate-400" />
@@ -486,7 +540,6 @@ const DoctorDashboard = () => {
                             {selectedCase.status === CaseStatus.OPEN && (
                                 <div className="bg-purple-50 border border-purple-100 p-5 rounded-lg relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        {/* Use a simple sparkle icon or relevant SVG */}
                                         <CheckCircle className="h-24 w-24 text-purple-600" /> 
                                     </div>
                                     <div className="flex items-center gap-2 mb-3 relative z-10">

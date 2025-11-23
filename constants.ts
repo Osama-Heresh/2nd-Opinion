@@ -157,13 +157,33 @@ export const TRANSLATIONS: Translation = {
   "auth.alreadyAccount": { en: "Already have an account?", ar: "لديك حساب بالفعل؟" },
   "auth.loginLink": { en: "Login here", ar: "سجل الدخول هنا" },
 
+  // Wallet & Payment
+  "wallet.title": { en: "Wallet & Transactions", ar: "المحفظة والمعاملات" },
+  "wallet.addFunds": { en: "Add Funds", ar: "إضافة رصيد" },
+  "wallet.currentBalance": { en: "Current Balance", ar: "الرصيد الحالي" },
+  "wallet.history": { en: "Transaction History", ar: "سجل المعاملات" },
+  "wallet.withdraw": { en: "Withdraw Funds", ar: "سحب الأموال" },
+  "payment.modalTitle": { en: "Secure Payment", ar: "دفع آمن" },
+  "payment.cardNumber": { en: "Card Number", ar: "رقم البطاقة" },
+  "payment.expiry": { en: "Expiry Date", ar: "تاريخ الانتهاء" },
+  "payment.cvc": { en: "CVC", ar: "رمز التحقق" },
+  "payment.holder": { en: "Cardholder Name", ar: "اسم حامل البطاقة" },
+  "payment.payNow": { en: "Pay Now", ar: "ادفع الآن" },
+  "payment.processing": { en: "Processing...", ar: "جاري المعالجة..." },
+  "payment.success": { en: "Payment Successful", ar: "تم الدفع بنجاح" },
+  "payment.amount": { en: "Amount to Deposit", ar: "المبلغ المراد إيداعه" },
+  "tx.DEPOSIT": { en: "Deposit", ar: "إيداع" },
+  "tx.CASE_FEE": { en: "Consultation Fee", ar: "رسوم استشارة" },
+  "tx.PAYOUT": { en: "Earnings Payout", ar: "صرف الأرباح" },
+  "tx.COMMISSION": { en: "Platform Commission", ar: "عمولة المنصة" },
+
   // Settings
   "settings.title": { en: "Profile Settings", ar: "إعدادات الملف الشخصي" },
   "settings.updateBtn": { en: "Update Profile", ar: "تحديث الملف الشخصي" },
   "settings.success": { en: "Profile updated successfully.", ar: "تم تحديث الملف الشخصي بنجاح." },
   "settings.changePhoto": { en: "Change Photo", ar: "تغيير الصورة" },
 
-  // Doctor Dashboard - New
+  // Doctor Dashboard
   "doctor.markRare": { en: "Mark as Rare / Educational Case", ar: "وضع علامة كحالة نادرة / تعليمية" },
   "doctor.rareCases": { en: "Rare Cases Library", ar: "مكتبة الحالات النادرة" },
   "doctor.community": { en: "Community", ar: "المجتمع" },
@@ -223,6 +243,7 @@ export const TRANSLATIONS: Translation = {
   "admin.title": { en: "Admin Dashboard", ar: "لوحة تحكم المسؤول" },
   "admin.tab.overview": { en: "Overview", ar: "نظرة عامة" },
   "admin.tab.users": { en: "User Management", ar: "إدارة المستخدمين" },
+  "admin.tab.financials": { en: "Financials", ar: "الشؤون المالية" },
   "admin.reset": { en: "Reset Demo Data", ar: "إعادة تعيين البيانات التجريبية" },
   "admin.kpi.totalCases": { en: "Total Cases", ar: "إجمالي الحالات" },
   "admin.kpi.activeDoctors": { en: "Active Doctors", ar: "الأطباء النشطون" },
@@ -249,6 +270,14 @@ export const TRANSLATIONS: Translation = {
   "admin.users.delete": { en: "Delete", ar: "حذف" },
   "admin.users.pending": { en: "Pending Approval", ar: "بانتظار الموافقة" },
   "admin.users.active": { en: "Active", ar: "نشط" },
+
+  // Admin Financials
+  "admin.fin.title": { en: "Platform Transactions", ar: "معاملات المنصة" },
+  "admin.fin.search": { en: "Search transactions...", ar: "بحث في المعاملات..." },
+  "admin.th.transId": { en: "Transaction ID", ar: "رقم المعاملة" },
+  "admin.th.type": { en: "Type", ar: "النوع" },
+  "admin.th.amount": { en: "Amount", ar: "المبلغ" },
+  "admin.th.user": { en: "User", ar: "المستخدم" },
 
   // HIPAA Page
   "hipaa.badge": { en: "Security First Platform", ar: "منصة الأمان أولاً" },

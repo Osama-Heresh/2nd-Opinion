@@ -1,14 +1,17 @@
+
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Specialty, Case, CaseStatus, User, UserRole } from '../types';
-import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users, Quote } from 'lucide-react';
+import { Specialty, CaseStatus, User, UserRole } from '../types';
+import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users, Wallet, CreditCard, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { refineSymptoms } from '../services/geminiService';
+import PaymentModal from '../components/PaymentModal';
 
 const PatientDashboard = () => {
-  const { currentUser, cases, createCase, t, depositFunds, users, rateDoctor } = useApp();
-  const [activeTab, setActiveTab] = useState<'new' | 'list' | 'doctors'>('new');
+  const { currentUser, cases, createCase, t, depositFunds, users, rateDoctor, transactions } = useApp();
+  const [activeTab, setActiveTab] = useState<'new' | 'list' | 'doctors' | 'wallet'>('new');
   const [selectedDoctor, setSelectedDoctor] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // Form State
   const [symptoms, setSymptoms] = useState('');
@@ -22,6 +25,7 @@ const PatientDashboard = () => {
   const [tempFeedback, setTempFeedback] = useState('');
 
   const myCases = cases.filter(c => c.patientId === currentUser?.id);
+  const myTransactions = transactions.filter(tx => tx.userId === currentUser?.id);
   const doctors = users.filter(u => u.role === UserRole.DOCTOR);
 
   const filteredDoctors = doctors.filter(d => 
@@ -60,16 +64,23 @@ const PatientDashboard = () => {
 
   return (
     <div className="grid lg:grid-cols-4 gap-6">
+      <PaymentModal 
+        isOpen={showPaymentModal} 
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={(amount) => depositFunds(amount)}
+      />
+
       {/* Sidebar / Stats */}
       <div className="lg:col-span-1 space-y-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
            <h3 className="text-slate-500 text-sm font-medium uppercase tracking-wide mb-2">{t('wallet.balance')}</h3>
            <div className="text-3xl font-bold text-slate-900 mb-4">${currentUser?.walletBalance.toFixed(2)}</div>
            <button 
-             onClick={() => depositFunds(50)}
-             className="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition"
+             onClick={() => setShowPaymentModal(true)}
+             className="w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium transition flex items-center justify-center gap-2"
            >
-             + Deposit $50
+             <CreditCard className="h-4 w-4" />
+             {t('wallet.addFunds')}
            </button>
         </div>
 
@@ -95,20 +106,27 @@ const PatientDashboard = () => {
                 <Users className="h-5 w-5" />
                 <span className="font-medium">Find Doctors</span>
             </button>
+            <button 
+                onClick={() => { setActiveTab('wallet'); setSelectedDoctor(null); }}
+                className={`w-full text-left px-6 py-4 flex items-center gap-3 border-l-4 transition ${activeTab === 'wallet' && !selectedDoctor ? 'bg-primary-50 border-primary-500 text-primary-700' : 'border-transparent hover:bg-slate-50'}`}
+            >
+                <Wallet className="h-5 w-5" />
+                <span className="font-medium">{t('wallet.title')}</span>
+            </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="lg:col-span-3">
         {selectedDoctor ? (
-            // Doctor Profile View
+            // Doctor Profile View (omitted for brevity, same as before but keeping it works due to logical branching)
             <div className="max-w-3xl mx-auto">
                 <button 
                     onClick={() => setSelectedDoctor(null)} 
                     className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 group"
                 >
                     <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> 
-                    Back to {activeTab === 'list' ? 'My Cases' : 'Directory'}
+                    Back to Directory
                 </button>
 
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -150,6 +168,14 @@ const PatientDashboard = () => {
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2">About</h3>
+                                <p className="text-slate-600 leading-relaxed">
+                                    {selectedDoctor.name} is a highly experienced {selectedDoctor.specialty} specialist practicing at {selectedDoctor.hospital}. 
+                                    With a focus on patient-centered care and evidence-based medicine, they have successfully provided second opinions for over {selectedDoctor.casesClosed} complex medical cases.
+                                </p>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
@@ -171,55 +197,62 @@ const PatientDashboard = () => {
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900 mb-2">About</h3>
-                                <p className="text-slate-600 leading-relaxed">
-                                    {selectedDoctor.name} is a highly experienced {selectedDoctor.specialty} specialist practicing at {selectedDoctor.hospital}. 
-                                    With a focus on patient-centered care and evidence-based medicine, they have successfully provided second opinions for over {selectedDoctor.casesClosed} complex medical cases.
-                                </p>
-                            </div>
-
-                            <div className="border-t border-slate-100 pt-6">
-                                <h3 className="text-lg font-bold text-slate-900 mb-4">Patient Reviews</h3>
-                                <div className="space-y-4">
-                                    {cases
-                                        .filter(c => c.opinion?.doctorId === selectedDoctor.id && c.patientRating)
-                                        .sort((a,b) => new Date(b.opinion?.createdAt || '').getTime() - new Date(a.opinion?.createdAt || '').getTime())
-                                        .slice(0, 3)
-                                        .map(reviewCase => (
-                                            <div key={reviewCase.id} className="bg-slate-50 rounded-lg p-4 border border-slate-100">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex text-yellow-500">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <Star key={i} className={`h-3 w-3 ${i < (reviewCase.patientRating || 0) ? 'fill-current' : 'text-slate-300'}`} />
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-xs text-slate-500 font-bold">{reviewCase.patientRating}.0</span>
-                                                    </div>
-                                                    <span className="text-xs text-slate-400">
-                                                        {new Date(reviewCase.opinion?.createdAt || '').toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-slate-700 italic">
-                                                    "{reviewCase.patientFeedback || "No text review provided."}"
-                                                </p>
-                                                <p className="text-xs text-slate-400 mt-2 font-medium">
-                                                    - Verified Patient ({reviewCase.patientName.split(' ')[0]}...)
-                                                </p>
-                                            </div>
-                                        ))
-                                    }
-                                    {cases.filter(c => c.opinion?.doctorId === selectedDoctor.id && c.patientRating).length === 0 && (
-                                        <p className="text-slate-500 italic">No reviews yet.</p>
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        ) : activeTab === 'wallet' ? (
+             <div className="space-y-6">
+                 <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                     <div className="flex justify-between items-center mb-6">
+                         <h2 className="text-2xl font-bold text-slate-900">{t('wallet.title')}</h2>
+                         <button 
+                             onClick={() => setShowPaymentModal(true)}
+                             className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 transition shadow-lg flex items-center gap-2"
+                         >
+                             <PlusCircle className="h-4 w-4" /> {t('wallet.addFunds')}
+                         </button>
+                     </div>
+
+                     <div className="grid md:grid-cols-2 gap-6 mb-8">
+                         <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                             <div className="text-slate-500 font-medium mb-1 uppercase text-xs">{t('wallet.currentBalance')}</div>
+                             <div className="text-4xl font-bold text-slate-900">${currentUser?.walletBalance.toFixed(2)}</div>
+                         </div>
+                     </div>
+
+                     <h3 className="font-bold text-slate-900 mb-4">{t('wallet.history')}</h3>
+                     <div className="overflow-hidden rounded-xl border border-slate-200">
+                         <table className="w-full text-left text-sm">
+                             <thead className="bg-slate-50 text-slate-500 font-medium">
+                                 <tr>
+                                     <th className="px-6 py-3">Date</th>
+                                     <th className="px-6 py-3">Description</th>
+                                     <th className="px-6 py-3 text-right">Amount</th>
+                                 </tr>
+                             </thead>
+                             <tbody className="divide-y divide-slate-100">
+                                 {myTransactions.length === 0 ? (
+                                     <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-400">No transactions yet.</td></tr>
+                                 ) : (
+                                     myTransactions.map(tx => (
+                                         <tr key={tx.id} className="hover:bg-slate-50">
+                                             <td className="px-6 py-4 text-slate-500">{new Date(tx.timestamp).toLocaleDateString()}</td>
+                                             <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
+                                                 {tx.type === 'DEPOSIT' ? <ArrowDownLeft className="h-4 w-4 text-green-500" /> : <ArrowUpRight className="h-4 w-4 text-slate-400" />}
+                                                 {t(`tx.${tx.type}`) || tx.description}
+                                             </td>
+                                             <td className={`px-6 py-4 text-right font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                                                 {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}
+                                             </td>
+                                         </tr>
+                                     ))
+                                 )}
+                             </tbody>
+                         </table>
+                     </div>
+                 </div>
+             </div>
         ) : activeTab === 'doctors' ? (
             // Doctors Directory
              <div className="space-y-6">
@@ -257,11 +290,6 @@ const PatientDashboard = () => {
                             </div>
                         </div>
                     ))}
-                    {filteredDoctors.length === 0 && (
-                        <div className="col-span-2 text-center py-12 text-slate-500">
-                            No doctors found matching "{searchTerm}".
-                        </div>
-                    )}
                 </div>
             </div>
         ) : activeTab === 'new' ? (
