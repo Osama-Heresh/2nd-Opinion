@@ -101,9 +101,43 @@ export const TRANSLATIONS: Translation = {
   "link.hipaa": { en: "HIPAA Compliance", ar: "الامتثال لقانون HIPAA" },
   "link.help": { en: "Help Center", ar: "مركز المساعدة" },
 
-  // Hero & Landing
-  "hero.title": { en: "Get a Second Opinion from Top Doctors", ar: "احصل على رأي طبي ثانٍ من أفضل الأطباء" },
-  "hero.subtitle": { en: "Secure, fast, and reliable medical validation.", ar: "تحقق طبي آمن، سريع، وموثوق." },
+  // Landing Page
+  "landing.trusted": { en: "Trusted by 10,000+ Patients", ar: "موثوق من قبل أكثر من 10,000 مريض" },
+  "landing.heroTitle1": { en: "Expert Medical", ar: "استشارات طبية" },
+  "landing.heroTitle2": { en: "Second Opinions", ar: "رأي ثانٍ خبير" },
+  "landing.heroDesc": { en: "Connect with world-class specialists to validate your diagnosis and treatment plan. Secure, fast, and powered by advanced AI assistance.", ar: "تواصل مع أطباء عالميين للتحقق من تشخيصك وخطة علاجك. آمن، سريع، ومدعوم بالذكاء الاصطناعي المتقدم." },
+  "landing.dashboardBtn": { en: "Go to Dashboard", ar: "الذهاب للوحة التحكم" },
+  "landing.demoPatient": { en: "Demo Patient", ar: "تجربة كمريض" },
+  "landing.demoDoctor": { en: "Demo Doctor", ar: "تجربة كطبيب" },
+  "landing.hipaa": { en: "HIPAA Compliant", ar: "متوافق مع HIPAA" },
+  "landing.topDoctors": { en: "Top 1% Doctors", ar: "أفضل 1% من الأطباء" },
+  "landing.imgBadgeDoctors": { en: "500+ Doctors", ar: "500+ طبيب" },
+  "landing.imgBadgeReady": { en: "Ready to review your case today.", ar: "جاهزون لمراجعة حالتك اليوم." },
+  
+  "landing.stat.response": { en: "Avg. Response Time", ar: "متوسط وقت الرد" },
+  "landing.stat.specialties": { en: "Specialties Covered", ar: "تخصص طبي" },
+  "landing.stat.cases": { en: "Cases Resolved", ar: "حالة تم حلها" },
+  "landing.stat.satisfaction": { en: "Patient Satisfaction", ar: "رضا المرضى" },
+
+  "landing.why.title": { en: "Why Choose 2nd Opinion?", ar: "لماذا تختار الرأي الثاني؟" },
+  "landing.why.desc": { en: "We combine top-tier medical expertise with advanced technology to give you the clarity you deserve.", ar: "نجمع بين الخبرة الطبية رفيعة المستوى والتكنولوجيا المتقدمة لمنحك الوضوح الذي تستحقه." },
+  
+  "landing.feature1.title": { en: "Verified Specialists", ar: "أطباء معتمدون" },
+  "landing.feature1.desc": { en: "Access a global network of board-certified doctors. Every specialist is vetted, licensed, and reviewed by patients like you.", ar: "الوصول إلى شبكة عالمية من الأطباء المعتمدين. يتم فحص كل متخصص وترخيصه وتقييمه من قبل مرضى مثلك." },
+  
+  "landing.feature2.title": { en: "Fast Turnaround", ar: "سرعة في الإنجاز" },
+  "landing.feature2.desc": { en: "Anxiety shouldn't wait. Receive a comprehensive second opinion report within 24-48 hours of submission.", ar: "القلق لا يجب أن ينتظر. احصل على تقرير رأي ثانٍ شامل في غضون 24-48 ساعة من التقديم." },
+  
+  "landing.feature3.title": { en: "AI-Enhanced Analysis", ar: "تحليل معزز بالذكاء الاصطناعي" },
+  "landing.feature3.desc": { en: "Our Gemini AI pre-analyzes your history and labs to highlight key data points, ensuring your doctor misses nothing.", ar: "يقوم نموذج Gemini AI الخاص بنا بتحليل تاريخك وتحاليلك مسبقًا لتسليط الضوء على البيانات الرئيسية، مما يضمن عدم تفويت طبيبك لأي شيء." },
+
+  "landing.leaderboard.title": { en: "Top Rated Specialists", ar: "الأطباء الأعلى تقييماً" },
+  "landing.leaderboard.subtitle": { en: "Doctors recognized for their accuracy and patient care this month.", ar: "أطباء تم تكريمهم لدقتهم ورعايتهم للمرضى هذا الشهر." },
+  "landing.leaderboard.viewAll": { en: "View All Doctors", ar: "عرض جميع الأطباء" },
+  "landing.leaderboard.cases": { en: "cases closed", ar: "حالة مغلقة" },
+  "landing.leaderboard.bonus": { en: "bonus pts", ar: "نقاط مكافأة" },
+  "landing.adminDemo": { en: "Access Admin Portal (Demo)", ar: "دخول بوابة المسؤول (تجريبي)" },
+
   "role.patient": { en: "Patient", ar: "مريض" },
   "role.doctor": { en: "Doctor", ar: "طبيب" },
   "role.admin": { en: "Admin", ar: "مسؤول" },

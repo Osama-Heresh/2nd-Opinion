@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { UserRole } from '../types';
-import { ShieldCheck, Stethoscope, Clock, Star, Users, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Stethoscope, Clock, Star, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const Landing = () => {
   const { login, currentUser, t, users } = useApp();
@@ -45,21 +45,21 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
                 {/* Left Content */}
-                <div className="space-y-8 text-center lg:text-left">
+                <div className="space-y-8 text-center lg:text-start">
                     <div className="inline-flex items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-full px-4 py-1.5 text-sm font-semibold text-slate-600 mb-2">
                         <span className="flex h-2 w-2 rounded-full bg-secondary-500"></span>
-                        Trusted by 10,000+ Patients
+                        {t('landing.trusted')}
                     </div>
                     
                     <h1 className="text-5xl lg:text-7xl font-display font-bold text-slate-900 leading-[1.1] tracking-tight">
-                        Expert Medical <br/>
+                        {t('landing.heroTitle1')} <br/>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-500">
-                            Second Opinions
+                            {t('landing.heroTitle2')}
                         </span>
                     </h1>
                     
                     <p className="text-lg text-slate-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                        Connect with world-class specialists to validate your diagnosis and treatment plan. Secure, fast, and powered by advanced AI assistance.
+                        {t('landing.heroDesc')}
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -72,7 +72,7 @@ const Landing = () => {
                                 }}
                                 className="px-8 py-4 bg-primary-600 text-white rounded-full font-bold shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition flex items-center gap-2 text-lg"
                              >
-                                Go to Dashboard <ArrowRight className="h-5 w-5" />
+                                {t('landing.dashboardBtn')} <ArrowRight className="h-5 w-5 rtl:rotate-180" />
                              </button>
                         ) : (
                             <>
@@ -80,13 +80,13 @@ const Landing = () => {
                                     onClick={() => handleLogin('ahmed@example.com')}
                                     className="w-full sm:w-auto px-8 py-4 bg-primary-600 text-white rounded-full font-bold shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition flex items-center justify-center gap-2"
                                 >
-                                    Demo Patient <ArrowRight className="h-4 w-4" />
+                                    {t('landing.demoPatient')} <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                                 </button>
                                 <button 
                                     onClick={() => handleLogin('sarah@clinic.com')}
                                     className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-full font-bold hover:bg-slate-50 transition flex items-center justify-center gap-2"
                                 >
-                                    Demo Doctor
+                                    {t('landing.demoDoctor')}
                                 </button>
                             </>
                         )}
@@ -95,11 +95,11 @@ const Landing = () => {
                     <div className="pt-4 flex items-center justify-center lg:justify-start gap-8 text-sm font-medium text-slate-500">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-5 w-5 text-secondary-500" />
-                            HIPAA Compliant
+                            {t('landing.hipaa')}
                         </div>
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-5 w-5 text-secondary-500" />
-                            Top 1% Doctors
+                            {t('landing.topDoctors')}
                         </div>
                     </div>
                 </div>
@@ -113,15 +113,15 @@ const Landing = () => {
                             className="w-full h-auto object-cover transform hover:scale-105 transition duration-700"
                         />
                         {/* Floating Badge */}
-                        <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-100 max-w-[200px]">
+                        <div className="absolute bottom-6 left-6 rtl:left-auto rtl:right-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-100 max-w-[200px]">
                             <div className="flex items-center gap-2 mb-1">
-                                <div className="flex -space-x-2">
+                                <div className="flex -space-x-2 rtl:space-x-reverse">
                                     <img className="w-8 h-8 rounded-full border-2 border-white" src={users[1].avatarUrl} alt="" />
                                     <img className="w-8 h-8 rounded-full border-2 border-white" src={users[2].avatarUrl} alt="" />
                                 </div>
-                                <span className="text-xs font-bold text-slate-700">500+ Doctors</span>
+                                <span className="text-xs font-bold text-slate-700">{t('landing.imgBadgeDoctors')}</span>
                             </div>
-                            <p className="text-xs text-slate-500">Ready to review your case today.</p>
+                            <p className="text-xs text-slate-500">{t('landing.imgBadgeReady')}</p>
                         </div>
                     </div>
                     {/* Decorative Elements */}
@@ -138,19 +138,19 @@ const Landing = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                   <div>
                       <div className="text-4xl font-display font-bold text-secondary-400 mb-1">24h</div>
-                      <div className="text-slate-400 text-sm">Avg. Response Time</div>
+                      <div className="text-slate-400 text-sm">{t('landing.stat.response')}</div>
                   </div>
                   <div>
                       <div className="text-4xl font-display font-bold text-white mb-1">50+</div>
-                      <div className="text-slate-400 text-sm">Specialties Covered</div>
+                      <div className="text-slate-400 text-sm">{t('landing.stat.specialties')}</div>
                   </div>
                   <div>
                       <div className="text-4xl font-display font-bold text-white mb-1">10k+</div>
-                      <div className="text-slate-400 text-sm">Cases Resolved</div>
+                      <div className="text-slate-400 text-sm">{t('landing.stat.cases')}</div>
                   </div>
                   <div>
                       <div className="text-4xl font-display font-bold text-white mb-1">4.9/5</div>
-                      <div className="text-slate-400 text-sm">Patient Satisfaction</div>
+                      <div className="text-slate-400 text-sm">{t('landing.stat.satisfaction')}</div>
                   </div>
               </div>
           </div>
@@ -160,8 +160,8 @@ const Landing = () => {
       <section className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-16">
-                <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">Why Choose 2nd Opinion?</h2>
-                <p className="text-lg text-slate-600">We combine top-tier medical expertise with advanced technology to give you the clarity you deserve.</p>
+                <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">{t('landing.why.title')}</h2>
+                <p className="text-lg text-slate-600">{t('landing.why.desc')}</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -169,9 +169,9 @@ const Landing = () => {
                     <div className="bg-white w-14 h-14 rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition">
                         <ShieldCheck className="text-primary-600 h-7 w-7" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">Verified Specialists</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{t('landing.feature1.title')}</h3>
                     <p className="text-slate-600 leading-relaxed">
-                        Access a global network of board-certified doctors. Every specialist is vetted, licensed, and reviewed by patients like you.
+                        {t('landing.feature1.desc')}
                     </p>
                 </div>
 
@@ -179,9 +179,9 @@ const Landing = () => {
                     <div className="bg-white w-14 h-14 rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition">
                         <Clock className="text-secondary-600 h-7 w-7" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">Fast Turnaround</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{t('landing.feature2.title')}</h3>
                     <p className="text-slate-600 leading-relaxed">
-                        Anxiety shouldn't wait. Receive a comprehensive second opinion report within 24-48 hours of submission.
+                        {t('landing.feature2.desc')}
                     </p>
                 </div>
 
@@ -189,9 +189,9 @@ const Landing = () => {
                     <div className="bg-white w-14 h-14 rounded-xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition">
                         <Stethoscope className="text-purple-600 h-7 w-7" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">AI-Enhanced Analysis</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{t('landing.feature3.title')}</h3>
                     <p className="text-slate-600 leading-relaxed">
-                        Our Gemini AI pre-analyzes your history and labs to highlight key data points, ensuring your doctor misses nothing.
+                        {t('landing.feature3.desc')}
                     </p>
                 </div>
             </div>
@@ -203,14 +203,14 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
                 <div>
-                    <h2 className="text-3xl font-display font-bold text-slate-900 mb-2">Top Rated Specialists</h2>
-                    <p className="text-slate-600">Doctors recognized for their accuracy and patient care this month.</p>
+                    <h2 className="text-3xl font-display font-bold text-slate-900 mb-2">{t('landing.leaderboard.title')}</h2>
+                    <p className="text-slate-600">{t('landing.leaderboard.subtitle')}</p>
                 </div>
                 <button 
                     onClick={() => handleLogin('p1')} // Quick entry for patient
                     className="text-primary-600 font-bold hover:text-primary-700 flex items-center gap-1 group"
                 >
-                    View All Doctors <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    {t('landing.leaderboard.viewAll')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:rotate-180" />
                 </button>
             </div>
 
@@ -230,8 +230,8 @@ const Landing = () => {
                                 <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                                 {doc.rating}
                             </div>
-                            <span className="text-xs text-slate-400">{doc.casesClosed} cases closed</span>
-                            {(doc.bonusPoints || 0) > 0 && <span className="text-xs text-purple-600 font-medium">+{doc.bonusPoints} bonus pts</span>}
+                            <span className="text-xs text-slate-400">{doc.casesClosed} {t('landing.leaderboard.cases')}</span>
+                            {(doc.bonusPoints || 0) > 0 && <span className="text-xs text-purple-600 font-medium">+{doc.bonusPoints} {t('landing.leaderboard.bonus')}</span>}
                         </div>
                     </div>
                 ))}
@@ -243,7 +243,7 @@ const Landing = () => {
                     onClick={() => handleLogin('admin@2ndopinion.com')}
                     className="text-xs text-slate-400 hover:text-slate-600 underline"
                 >
-                    Access Admin Portal (Demo)
+                    {t('landing.adminDemo')}
                 </button>
             </div>
         </div>

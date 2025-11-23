@@ -16,6 +16,17 @@ import {
   Menu, X
 } from 'lucide-react';
 
+// ScrollToTop Component to handle scroll reset on navigation
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children, role }: { children?: React.ReactNode, role?: UserRole }) => {
   const { currentUser } = useApp();
@@ -191,6 +202,7 @@ const App = () => {
   return (
     <AppProvider>
       <Router>
+        <ScrollToTop />
         <Layout>
           <Routes>
             <Route path="/" element={<Landing />} />
