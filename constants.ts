@@ -105,7 +105,8 @@ export const MOCK_CASES: Case[] = [
       createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
     },
     patientRating: 5,
-    patientFeedback: "Dr. Karim was thorough and reassuring. Highly recommended for dermatology issues."
+    patientFeedback: "Dr. Karim was thorough and reassuring. Highly recommended for dermatology issues.",
+    isRare: false
   }
 ];
 
@@ -132,6 +133,7 @@ export const TRANSLATIONS: Translation = {
   "link.terms": { en: "Terms of Service", ar: "شروط الخدمة" },
   "link.hipaa": { en: "HIPAA Compliance", ar: "الامتثال لقانون HIPAA" },
   "link.help": { en: "Help Center", ar: "مركز المساعدة" },
+  "link.guide": { en: "User Guide", ar: "دليل المستخدم" },
 
   // Auth
   "auth.loginTitle": { en: "Welcome Back", ar: "مرحباً بعودتك" },
@@ -161,6 +163,12 @@ export const TRANSLATIONS: Translation = {
   "settings.success": { en: "Profile updated successfully.", ar: "تم تحديث الملف الشخصي بنجاح." },
   "settings.changePhoto": { en: "Change Photo", ar: "تغيير الصورة" },
 
+  // Doctor Dashboard - New
+  "doctor.markRare": { en: "Mark as Rare / Educational Case", ar: "وضع علامة كحالة نادرة / تعليمية" },
+  "doctor.rareCases": { en: "Rare Cases Library", ar: "مكتبة الحالات النادرة" },
+  "doctor.community": { en: "Community", ar: "المجتمع" },
+  "doctor.anonymized": { en: "Anonymized Patient", ar: "مريض مجهول الهوية" },
+  
   // Landing Page
   "landing.trusted": { en: "Trusted by 10,000+ Patients", ar: "موثوق من قبل أكثر من 10,000 مريض" },
   "landing.heroTitle1": { en: "Expert Medical", ar: "استشارات طبية" },
@@ -332,5 +340,57 @@ export const TRANSLATIONS: Translation = {
   "terms.disclaimerTitle": { en: "Medical Disclaimer", ar: "إخلاء المسؤولية الطبية" },
   "terms.disclaimerDesc": { en: "The content and services provided on this platform are for informational purposes only and are not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician for any medical condition.", ar: "المحتوى والخدمات المقدمة على هذه المنصة للأغراض الإعلامية فقط وليست بديلاً عن المشورة الطبية المهنية أو التشخيص أو العلاج. اطلب دائمًا نصيحة طبيبك لأي حالة طبية." },
   "terms.paymentTitle": { en: "Payments and Refunds", ar: "المدفوعات والمبالغ المستردة" },
-  "terms.paymentDesc": { en: "Fees for consultations are charged at the time of submission. Refunds are processed only if a case is cancelled before specialist review begins.", ar: "يتم فرض رسوم الاستشارات في وقت التقديم. تتم معالجة المبالغ المستردة فقط إذا تم إلغاء الحالة قبل بدء مراجعة الأخصائي." }
+  "terms.paymentDesc": { en: "Fees for consultations are charged at the time of submission. Refunds are processed only if a case is cancelled before specialist review begins.", ar: "يتم فرض رسوم الاستشارات في وقت التقديم. تتم معالجة المبالغ المستردة فقط إذا تم إلغاء الحالة قبل بدء مراجعة الأخصائي." },
+
+  // User Guide
+  "guide.badge": { en: "Training Manual v1.0", ar: "دليل التدريب v1.0" },
+  "guide.title": { en: "User Documentation", ar: "وثائق المستخدم" },
+  "guide.desc": { en: "Comprehensive guide for Patients, Doctors, and Administrators on how to use the 2nd Opinion platform effectively.", ar: "دليل شامل للمرضى والأطباء والمسؤولين حول كيفية استخدام منصة الرأي الثاني بفعالية." },
+  "guide.toc": { en: "Table of Contents", ar: "جدول المحتويات" },
+  "guide.nav.intro": { en: "1. Overview", ar: "1. نظرة عامة" },
+  "guide.nav.auth": { en: "2. Registration & Login", ar: "2. التسجيل والدخول" },
+  "guide.nav.patient": { en: "3. Patient Guide", ar: "3. دليل المريض" },
+  "guide.nav.doctor": { en: "4. Doctor Guide", ar: "4. دليل الطبيب" },
+  "guide.nav.admin": { en: "5. Admin Guide", ar: "5. دليل المسؤول" },
+  "guide.support.title": { en: "Need Support?", ar: "تحتاج مساعدة؟" },
+  "guide.support.text": { en: "Contact our IT helpdesk for technical issues.", ar: "تواصل مع مكتب المساعدة الفنية لأي مشاكل." },
+  "guide.intro.title": { en: "1. Overview", ar: "1. نظرة عامة" },
+  "guide.intro.text": { en: "2nd Opinion is a secure, HIPAA-compliant SaaS platform connecting patients seeking second medical opinions with top-tier global specialists. The platform leverages Gemini AI to assist in symptom analysis and provides a seamless workflow for document upload, review, and payment.", ar: "الرأي الثاني هي منصة آمنة ومتوافقة مع HIPAA تربط المرضى الذين يبحثون عن آراء طبية ثانية بمتخصصين عالميين. تستفيد المنصة من Gemini AI للمساعدة في تحليل الأعراض وتوفر سير عمل سلس لتحميل المستندات والمراجعة والدفع." },
+  "guide.screen.landing": { en: "Screenshot: Landing Page", ar: "لقطة شاشة: الصفحة الرئيسية" },
+  "guide.auth.title": { en: "2. Registration & Login", ar: "2. التسجيل والدخول" },
+  "guide.auth.createTitle": { en: "Creating an Account", ar: "إنشاء حساب" },
+  "guide.auth.createText": { en: "New users must register by clicking 'Get Started'. During registration, you must select your role:", ar: "يجب على المستخدمين الجدد التسجيل بالنقر على 'ابدأ الآن'. أثناء التسجيل، يجب عليك اختيار دورك:" },
+  "guide.auth.rolePatient": { en: "Patients: Immediate access upon registration.", ar: "المرضى: وصول فوري عند التسجيل." },
+  "guide.auth.roleDoctor": { en: "Doctors: Requires providing credentials (License, Hospital, LinkedIn). Account status will be 'Pending' until approved by an Admin.", ar: "الأطباء: يتطلب تقديم بيانات الاعتماد (الترخيص، المستشفى، LinkedIn). ستكون حالة الحساب 'قيد الانتظار' حتى الموافقة عليها من قبل المسؤول." },
+  "guide.auth.noteTitle": { en: "Note for Doctors", ar: "ملاحظة للأطباء" },
+  "guide.auth.noteText": { en: "If you cannot login immediately after registering, it means your account is still under review. Please allow up to 24 hours for verification.", ar: "إذا لم تتمكن من تسجيل الدخول فوراً بعد التسجيل، فهذا يعني أن حسابك لا يزال قيد المراجعة. يرجى الانتظار حتى 24 ساعة للتحقق." },
+  "guide.patient.title": { en: "3. Patient Guide", ar: "3. دليل المريض" },
+  "guide.patient.dashTitle": { en: "Dashboard Overview", ar: "نظرة عامة على لوحة التحكم" },
+  "guide.patient.dashText": { en: "The Patient Dashboard is your central hub. Here you can see your wallet balance, start new consultations, and track the status of existing cases.", ar: "لوحة تحكم المريض هي مركزك الرئيسي. هنا يمكنك رؤية رصيد محفظتك، وبدء استشارات جديدة، وتتبع حالة الحالات الحالية." },
+  "guide.patient.submitTitle": { en: "Submitting a Case", ar: "تقديم حالة" },
+  "guide.patient.step1": { en: "Start: Click the 'New Case' button in the sidebar.", ar: "البدء: انقر على زر 'حالة جديدة' في الشريط الجانبي." },
+  "guide.patient.step2": { en: "Select Specialty: Choose the medical category relevant to your condition.", ar: "اختر التخصص: اختر الفئة الطبية ذات الصلة بحالتك." },
+  "guide.patient.step3": { en: "Describe Symptoms (AI Assisted): Type your symptoms in the text box.", ar: "وصف الأعراض (بمساعدة AI): اكتب أعراضك في مربع النص." },
+  "guide.patient.proTip": { en: "Pro Tip: Click 'AI Refine' to have Gemini AI rewrite your description into clearer clinical terms for the doctor.", ar: "نصيحة محترف: انقر على 'تحسين AI' ليقوم Gemini AI بإعادة كتابة وصفك بمصطلحات طبية أوضح للطبيب." },
+  "guide.patient.step4": { en: "Payment: The $40.00 fee is deducted automatically from your wallet. Ensure you have sufficient funds (use the Deposit button if needed).", ar: "الدفع: يتم خصم الرسوم البالغة 40.00 دولاراً تلقائياً من محفظتك. تأكد من وجود رصيد كافٍ (استخدم زر الإيداع إذا لزم الأمر)." },
+  "guide.patient.findDocTitle": { en: "Finding a Specific Doctor", ar: "البحث عن طبيب معين" },
+  "guide.patient.findDocText": { en: "Instead of the general pool, you can request a specific specialist. Go to the 'Find Doctors' tab, search by name or hospital, and view their full profile before booking.", ar: "بدلاً من المجموعة العامة، يمكنك طلب متخصص معين. انتقل إلى علامة تبويب 'البحث عن أطباء'، وابحث بالاسم أو المستشفى، واعرض ملفهم الشخصي الكامل قبل الحجز." },
+  "guide.doctor.title": { en: "4. Doctor Guide", ar: "4. دليل الطبيب" },
+  "guide.doctor.discoveryTitle": { en: "Case Discovery", ar: "اكتشاف الحالات" },
+  "guide.doctor.discoveryText": { en: "Your dashboard shows 'Available Cases' filtered by your specialty.", ar: "تعرض لوحة التحكم الخاصة بك 'الحالات المتاحة' المصفاة حسب تخصصك." },
+  "guide.doctor.directReq": { en: "Direct Requests: Cases assigned specifically to you are highlighted in purple with a star badge.", ar: "الطلبات المباشرة: الحالات المعينة لك خصيصاً مميزة باللون الأرجواني مع شارة نجمة." },
+  "guide.doctor.reviewTitle": { en: "Reviewing a Case", ar: "مراجعة حالة" },
+  "guide.doctor.reviewText": { en: "Click on any case to open the detailed view.", ar: "انقر على أي حالة لفتح العرض التفصيلي." },
+  "guide.doctor.reviewList1": { en: "Patient History: Read the symptoms and download attached files.", ar: "تاريخ المريض: اقرأ الأعراض وقم بتنزيل الملفات المرفقة." },
+  "guide.doctor.reviewList2": { en: "AI Insights: Review the automated analysis provided by Gemini AI to spot key indicators quickly.", ar: "رؤى AI: راجع التحليل الآلي المقدم من Gemini AI لاكتشاف المؤشرات الرئيسية بسرعة." },
+  "guide.doctor.reviewList3": { en: "Action Console: Choose to Agree, Disagree, or Request More Tests.", ar: "وحدة التحكم بالإجراءات: اختر الموافقة، عدم الموافقة، أو طلب المزيد من الاختبارات." },
+  "guide.doctor.profileTitle": { en: "Profile Settings", ar: "إعدادات الملف الشخصي" },
+  "guide.doctor.profileText": { en: "Keep your profile updated to attract more patients. Click the Settings (Gear Icon) to update your Bio, Hospital, LinkedIn URL, and Profile Photo.", ar: "حافظ على تحديث ملفك الشخصي لجذب المزيد من المرضى. انقر على الإعدادات (أيقونة الترس) لتحديث نبذتك، المستشفى، رابط LinkedIn، وصورة الملف الشخصي." },
+  "guide.admin.title": { en: "5. Admin Guide", ar: "5. دليل المسؤول" },
+  "guide.admin.platformTitle": { en: "Platform Overview", ar: "نظرة عامة على المنصة" },
+  "guide.admin.platformText": { en: "The Admin Dashboard provides real-time metrics on total revenue, active doctors, and case volume. Use the charts to identify trending specialties.", ar: "توفر لوحة تحكم المسؤول مقاييس في الوقت الفعلي حول إجمالي الإيرادات، الأطباء النشطين، وحجم الحالات. استخدم الرسوم البيانية لتحديد التخصصات الرائجة." },
+  "guide.admin.usersTitle": { en: "Managing Users", ar: "إدارة المستخدمين" },
+  "guide.admin.usersText": { en: "Navigate to the 'User Management' tab to approve new doctor registrations.", ar: "انتقل إلى علامة تبويب 'إدارة المستخدمين' للموافقة على تسجيلات الأطباء الجدد." },
+  "guide.admin.usersList1": { en: "Approve: Grants the doctor access to the platform.", ar: "موافقة: تمنح الطبيب حق الوصول إلى المنصة." },
+  "guide.admin.usersList2": { en: "Reject/Suspend: Revokes access immediately.", ar: "رفض/تعليق: يلغي الوصول فوراً." },
 };

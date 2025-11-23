@@ -2,17 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus, User } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon } from 'lucide-react';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
 
 const DoctorDashboard = () => {
   const { currentUser, cases, users, submitOpinion, updateUserProfile, t } = useApp();
-  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'settings'>('available');
+  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'rare' | 'settings'>('available');
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   
   // Review Form State
   const [notes, setNotes] = useState('');
   const [decision, setDecision] = useState<'Agree'|'Disagree'|'MoreTests'>('Agree');
+  const [isRare, setIsRare] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState(false);
 
@@ -34,6 +35,9 @@ const DoctorDashboard = () => {
   );
 
   const myClosedCases = cases.filter(c => c.opinion?.doctorId === currentUser?.id);
+
+  // Rare Cases from ALL doctors (for community learning)
+  const rareCases = cases.filter(c => c.isRare && c.status === CaseStatus.CLOSED);
 
   // Rank Calculation Strategy: Score = (Cases * 10) + Bonus Points
   const calculateScore = (u: User) => ((u.casesClosed || 0) * 10) + (u.bonusPoints || 0);
@@ -92,6 +96,7 @@ const DoctorDashboard = () => {
     if (c.status === CaseStatus.OPEN) {
         setNotes('');
         setDecision('Agree');
+        setIsRare(false);
     }
   };
 
@@ -103,7 +108,7 @@ const DoctorDashboard = () => {
         decision,
         notes,
         createdAt: new Date().toISOString()
-    });
+    }, isRare);
     setSelectedCase(null);
     setActiveTab('closed'); // Switch to history to see the result
   };
@@ -189,18 +194,26 @@ const DoctorDashboard = () => {
            {activeTab !== 'settings' ? (
              <>
                 {/* Tabs */}
-                <div className="flex border-b border-slate-200">
+                <div className="flex border-b border-slate-200 overflow-x-auto">
                     <button 
                         onClick={() => setActiveTab('available')}
-                        className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'available' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
+                        className={`flex-1 py-4 px-2 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 whitespace-nowrap ${activeTab === 'available' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
                     >
                         Available ({availableCases.length})
                     </button>
                     <button 
                         onClick={() => setActiveTab('closed')}
-                        className={`flex-1 py-4 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 ${activeTab === 'closed' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
+                        className={`flex-1 py-4 px-2 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 whitespace-nowrap ${activeTab === 'closed' ? 'border-primary-500 text-primary-700' : 'border-transparent text-slate-500'}`}
                     >
-                        My History ({myClosedCases.length})
+                        History ({myClosedCases.length})
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('rare')}
+                        className={`flex-1 py-4 px-2 text-sm font-bold text-center border-b-2 transition hover:bg-slate-50 whitespace-nowrap flex items-center justify-center gap-1 ${activeTab === 'rare' ? 'border-purple-500 text-purple-700' : 'border-transparent text-slate-500'}`}
+                        title={t('doctor.rareCases')}
+                    >
+                        <Sparkles className="h-3 w-3" />
+                        Community
                     </button>
                 </div>
 
@@ -251,7 +264,7 @@ const DoctorDashboard = () => {
                                 </div>
                             )})
                         )
-                    ) : (
+                    ) : activeTab === 'closed' ? (
                         myClosedCases.length === 0 ? (
                             <div className="text-center py-12 px-4">
                                 <p className="text-slate-400">No history yet.</p>
@@ -269,7 +282,39 @@ const DoctorDashboard = () => {
                                         {c.opinion?.decision === 'Disagree' && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">Disagreed</span>}
                                         {c.opinion?.decision === 'MoreTests' && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded font-bold">Info Req.</span>}
                                     </div>
+                                    {c.isRare && (
+                                        <div className="text-xs text-purple-600 flex items-center gap-1 mb-1 font-bold">
+                                            <Sparkles className="h-3 w-3" /> Rare Case
+                                        </div>
+                                    )}
                                     <div className="text-xs text-slate-400">Closed on {c.opinion?.createdAt ? new Date(c.opinion.createdAt).toLocaleDateString() : '-'}</div>
+                                </div>
+                            ))
+                        )
+                    ) : (
+                        // Rare Cases Community Tab
+                        rareCases.length === 0 ? (
+                            <div className="text-center py-12 px-4">
+                                <Sparkles className="h-10 w-10 text-purple-200 mx-auto mb-3" />
+                                <p className="text-slate-500 text-sm">No rare cases in the library yet.</p>
+                                <p className="text-xs text-slate-400 mt-1">Mark interesting cases as rare to share them here.</p>
+                            </div>
+                        ) : (
+                            rareCases.map(c => (
+                                <div 
+                                    key={c.id} 
+                                    onClick={() => handleSelectCase(c)}
+                                    className={`p-4 rounded-lg border cursor-pointer transition ${selectedCase?.id === c.id ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-purple-100 bg-white hover:border-purple-300'}`}
+                                >
+                                    <div className="flex justify-between items-center mb-1">
+                                        <div className="flex items-center gap-1">
+                                             <Sparkles className="h-3 w-3 text-purple-600" />
+                                             <span className="font-bold text-sm text-purple-900">{t('doctor.anonymized')}</span>
+                                        </div>
+                                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{c.specialty}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 line-clamp-2 italic mb-2">"{c.symptoms}"</p>
+                                    <div className="text-xs text-slate-400">By Dr. {c.opinion?.doctorName.split(' ').pop()}</div>
                                 </div>
                             ))
                         )
@@ -284,9 +329,6 @@ const DoctorDashboard = () => {
                  </button>
                  <button className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 text-sm hover:bg-slate-100 transition" disabled>
                      Change Password (N/A)
-                 </button>
-                 <button className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 text-sm hover:bg-slate-100 transition mt-2" disabled>
-                     Notification Preferences (N/A)
                  </button>
              </div>
            )}
@@ -396,7 +438,14 @@ const DoctorDashboard = () => {
                         {/* Header */}
                         <div className="mb-6 flex justify-between items-start border-b border-slate-100 pb-4">
                              <div>
-                                 <h2 className="text-2xl font-bold text-slate-900 mb-1">{selectedCase.patientName}</h2>
+                                 {activeTab === 'rare' ? (
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Sparkles className="h-5 w-5 text-purple-600" />
+                                        <h2 className="text-2xl font-bold text-slate-900">{t('doctor.anonymized')}</h2>
+                                    </div>
+                                 ) : (
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-1">{selectedCase.patientName}</h2>
+                                 )}
                                  <div className="flex items-center gap-2 text-sm text-slate-500">
                                      <span>Case ID: #{selectedCase.id.slice(-6)}</span>
                                      <span>•</span>
@@ -409,10 +458,17 @@ const DoctorDashboard = () => {
                                          <Clock className="h-4 w-4" /> Open for Review
                                      </span>
                                  ) : (
-                                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-sm">
-                                         <CheckCircle className="h-4 w-4" /> 
-                                         {selectedCase.status === CaseStatus.PENDING_INFO ? 'Pending Info' : 'Closed'}
-                                     </span>
+                                     <div className="flex flex-col items-end gap-1">
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-sm">
+                                            <CheckCircle className="h-4 w-4" /> 
+                                            {selectedCase.status === CaseStatus.PENDING_INFO ? 'Pending Info' : 'Closed'}
+                                        </span>
+                                        {selectedCase.isRare && (
+                                            <span className="inline-flex items-center gap-1 text-xs text-purple-600 font-bold">
+                                                <Sparkles className="h-3 w-3" /> Rare Case
+                                            </span>
+                                        )}
+                                     </div>
                                  )}
                              </div>
                         </div>
@@ -454,7 +510,7 @@ const DoctorDashboard = () => {
                             <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
                                 <h3 className="font-bold text-green-800 mb-4 flex items-center gap-2">
                                     <CheckCircle className="h-5 w-5" />
-                                    Your Submitted Opinion
+                                    {activeTab === 'rare' ? "Doctor's Opinion" : "Your Submitted Opinion"}
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div className="bg-white p-3 rounded border border-green-100">
@@ -472,6 +528,11 @@ const DoctorDashboard = () => {
                                     </span>
                                     <p className="text-slate-800">{selectedCase.opinion.notes}</p>
                                 </div>
+                                {activeTab === 'rare' && (
+                                    <div className="mt-4 pt-4 border-t border-green-200 text-right">
+                                        <span className="text-xs text-green-700 font-medium">Reviewed by Dr. {selectedCase.opinion.doctorName}</span>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -511,6 +572,23 @@ const DoctorDashboard = () => {
                                 placeholder={decision === 'MoreTests' ? "Please list the specific tests, labs, or history records required to complete the diagnosis..." : "Provide your detailed medical opinion, reasoning, and next steps..."}
                                 className="w-full bg-slate-800 border-slate-700 text-white rounded-lg p-4 h-32 mb-4 focus:ring-2 focus:ring-primary-500 outline-none placeholder:text-slate-500 resize-none text-sm"
                             />
+                            
+                            {decision !== 'MoreTests' && (
+                                <div className="mb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isRare}
+                                            onChange={(e) => setIsRare(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-slate-900" 
+                                        />
+                                        <span className={`text-sm font-medium transition ${isRare ? 'text-purple-400' : 'text-slate-400 group-hover:text-slate-300'}`}>
+                                            <Sparkles className="inline h-3 w-3 mr-1" />
+                                            {t('doctor.markRare')}
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
 
                             <button 
                                 onClick={handleSubmitOpinion}

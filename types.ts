@@ -69,6 +69,7 @@ export interface Case {
   opinion?: Opinion;
   patientRating?: number;
   patientFeedback?: string;
+  isRare?: boolean;
 }
 
 export interface Transaction {

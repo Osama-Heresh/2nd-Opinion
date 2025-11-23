@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import UserGuide from './pages/UserGuide';
 import { UserRole } from './types';
 import { 
   Activity, Languages, LogOut, Wallet, 
@@ -153,6 +154,7 @@ const Footer = () => {
                             <li><Link to="/privacy-policy" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.privacy')}</Link></li>
                             <li><Link to="/terms-of-service" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.terms')}</Link></li>
                             <li><Link to="/hipaa-compliance" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.hipaa')}</Link></li>
+                            <li><Link to="/user-guide" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.guide')}</Link></li>
                             <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</Link></li>
                         </ul>
                     </div>
@@ -220,6 +222,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/user-guide" element={<UserGuide />} />
             <Route 
               path="/patient" 
               element={

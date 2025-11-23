@@ -18,7 +18,7 @@ interface AppContextType {
   deleteUser: (userId: string) => void;
   toggleLanguage: () => void;
   createCase: (newCase: Partial<Case>) => Promise<boolean>;
-  submitOpinion: (caseId: string, opinion: Opinion) => Promise<void>;
+  submitOpinion: (caseId: string, opinion: Opinion, isRare?: boolean) => Promise<void>;
   rateDoctor: (caseId: string, rating: number, feedback?: string) => void;
   depositFunds: (amount: number) => void;
   resetDemo: () => void;
@@ -216,7 +216,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     return true;
   };
 
-  const submitOpinion = async (caseId: string, opinion: Opinion) => {
+  const submitOpinion = async (caseId: string, opinion: Opinion, isRare: boolean = false) => {
     if (!currentUser || currentUser.role !== UserRole.DOCTOR) return;
 
     // Update Case
@@ -226,7 +226,8 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
           ...c,
           status: opinion.decision === 'MoreTests' ? CaseStatus.PENDING_INFO : CaseStatus.CLOSED,
           opinion: opinion,
-          assignedDoctorId: currentUser.id
+          assignedDoctorId: currentUser.id,
+          isRare: isRare
         };
       }
       return c;
