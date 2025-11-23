@@ -55,6 +55,22 @@ export const MOCK_USERS: User[] = [
   }
 ];
 
+// Arabic Data Overrides for Doctors
+export const DOCTOR_DETAILS_AR: Record<string, { name: string, specialty: string, hospital: string, country: string }> = {
+  'd1': {
+    name: 'د. سارة سميث',
+    specialty: 'أمراض القلب',
+    hospital: 'مايو كلينك',
+    country: 'الولايات المتحدة'
+  },
+  'd2': {
+    name: 'د. كريم نادر',
+    specialty: 'الجلدية',
+    hospital: 'كليفلاند كلينك أبوظبي',
+    country: 'الإمارات'
+  }
+};
+
 export const MOCK_CASES: Case[] = [
   {
     id: 'c101',
@@ -73,7 +89,8 @@ export const MOCK_CASES: Case[] = [
       notes: 'Standard eczema. Prescribed hydrocortisone.',
       createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
     },
-    patientRating: 5
+    patientRating: 5,
+    patientFeedback: "Dr. Karim was thorough and reassuring. Highly recommended for dermatology issues."
   }
 ];
 
@@ -145,10 +162,32 @@ export const TRANSLATIONS: Translation = {
   "btn.newCase": { en: "New Case", ar: "حالة جديدة" },
   "status.open": { en: "Open", ar: "مفتوحة" },
   "status.closed": { en: "Closed", ar: "مغلقة" },
+  "status.pendingInfo": { en: "Pending Info", ar: "بانتظار معلومات" },
   "label.symptoms": { en: "Describe Symptoms", ar: "وصف الأعراض" },
   "label.specialty": { en: "Specialty", ar: "التخصص" },
   "ai.analyze": { en: "AI Analyze", ar: "تحليل الذكاء الاصطناعي" },
   "ai.refine": { en: "AI Refine", ar: "تحسين النص" },
+
+  // Admin Dashboard
+  "admin.title": { en: "Admin Overview", ar: "نظرة عامة للمسؤول" },
+  "admin.reset": { en: "Reset Demo Data", ar: "إعادة تعيين البيانات التجريبية" },
+  "admin.kpi.totalCases": { en: "Total Cases", ar: "إجمالي الحالات" },
+  "admin.kpi.activeDoctors": { en: "Active Doctors", ar: "الأطباء النشطون" },
+  "admin.kpi.volume": { en: "Total Volume", ar: "إجمالي التداول" },
+  "admin.kpi.profit": { en: "Net Profit (30%)", ar: "صافي الربح (30%)" },
+  "admin.chart.specialty": { en: "Cases by Specialty", ar: "الحالات حسب التخصص" },
+  "admin.chart.topDocs": { en: "Top Doctors (Cases Closed)", ar: "أفضل الأطباء (حالات مغلقة)" },
+  "admin.table.title": { en: "Recent Case Submissions", ar: "أحدث الحالات المقدمة" },
+  "admin.filter.all": { en: "All Statuses", ar: "جميع الحالات" },
+  "admin.searchPlaceholder": { en: "Search patient or ID...", ar: "ابحث عن مريض أو رقم تعريفي..." },
+  "admin.th.caseId": { en: "Case ID", ar: "رقم الحالة" },
+  "admin.th.patient": { en: "Patient", ar: "المريض" },
+  "admin.th.specialty": { en: "Specialty", ar: "التخصص" },
+  "admin.th.status": { en: "Status", ar: "الحالة" },
+  "admin.th.doctor": { en: "Doctor", ar: "الطبيب" },
+  "admin.th.date": { en: "Date", ar: "التاريخ" },
+  "admin.unassigned": { en: "Unassigned", ar: "غير معين" },
+  "admin.noCases": { en: "No cases found matching filters.", ar: "لا توجد حالات تطابق الفلاتر." },
 
   // HIPAA Page
   "hipaa.badge": { en: "Security First Platform", ar: "منصة الأمان أولاً" },
@@ -213,4 +252,12 @@ export const TRANSLATIONS: Translation = {
   "reviews.story.text": { en: "\"I spent two years visiting different specialists with no clear answer. Within 48 hours of submitting my case to 2nd Opinion, Dr. Sarah Smith identified a rare condition that had been overlooked.\"", ar: "\"قضيت عامين أزور متخصصين مختلفين دون إجابة واضحة. في غضون 48 ساعة من تقديم حالتي إلى الرأي الثاني، حددت الدكتورة سارة سميث حالة نادرة تم إغفالها.\"" },
   "reviews.story.author": { en: "Verified Patient • California, USA", ar: "مريض موثق • كاليفورنيا، الولايات المتحدة" },
   "reviews.ctaTitle": { en: "Ready to find your answers?", ar: "هل أنت مستعد للعثور على إجاباتك؟" },
+  
+  // Find Doctors Page
+  "findDoc.title": { en: "Find a Specialist", ar: "ابحث عن أخصائي" },
+  "findDoc.searchPlaceholder": { en: "Search name, specialty...", ar: "ابحث بالاسم، التخصص..." },
+  "findDoc.book": { en: "Book Consultation", ar: "حجز استشارة" },
+  "findDoc.noResults": { en: "No specialists found matching your search.", ar: "لم يتم العثور على أطباء يطابقون بحثك." },
+  "findDoc.location": { en: "Location", ar: "الموقع" },
+  "findDoc.allLocations": { en: "All Locations", ar: "جميع المواقع" },
 };

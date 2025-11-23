@@ -14,7 +14,7 @@ interface AppContextType {
   toggleLanguage: () => void;
   createCase: (newCase: Partial<Case>) => Promise<boolean>;
   submitOpinion: (caseId: string, opinion: Opinion) => Promise<void>;
-  rateDoctor: (caseId: string, rating: number) => void;
+  rateDoctor: (caseId: string, rating: number, feedback?: string) => void;
   depositFunds: (amount: number) => void;
   resetDemo: () => void;
 }
@@ -185,14 +185,14 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     }
   };
 
-  const rateDoctor = (caseId: string, rating: number) => {
+  const rateDoctor = (caseId: string, rating: number, feedback?: string) => {
     // 1. Update the Case with the new rating
     let doctorId: string | undefined;
 
     const updatedCases = cases.map(c => {
         if (c.id === caseId) {
             doctorId = c.opinion?.doctorId;
-            return { ...c, patientRating: rating };
+            return { ...c, patientRating: rating, patientFeedback: feedback };
         }
         return c;
     });

@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import HipaaCompliance from './pages/HipaaCompliance';
 import HowItWorks from './pages/HowItWorks';
 import Reviews from './pages/Reviews';
+import FindDoctors from './pages/FindDoctors';
 import { UserRole } from './types';
 import { 
   Activity, Languages, LogOut, Wallet, 
@@ -58,7 +59,7 @@ const Header = () => {
                 {!currentUser && (
                     <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
                         <Link to="/how-it-works" className="hover:text-primary-600 transition">{t('nav.howItWorks')}</Link>
-                        <Link to="/" className="hover:text-primary-600 transition">{t('nav.specialists')}</Link>
+                        <Link to="/find-doctors" className="hover:text-primary-600 transition">{t('nav.specialists')}</Link>
                         <Link to="/reviews" className="hover:text-primary-600 transition">{t('nav.reviews')}</Link>
                     </div>
                 )}
@@ -135,7 +136,7 @@ const Footer = () => {
                         <h3 className="text-white font-bold mb-6 font-display">{t('footer.platform')}</h3>
                         <ul className="space-y-3 text-sm">
                             <li><Link to="/how-it-works" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.howItWorks')}</Link></li>
-                            <li><Link to="/" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.findDoctor')}</Link></li>
+                            <li><Link to="/find-doctors" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.findDoctor')}</Link></li>
                             <li><Link to="/reviews" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.reviews')}</Link></li>
                         </ul>
                     </div>
@@ -209,6 +210,7 @@ const App = () => {
             <Route path="/hipaa-compliance" element={<HipaaCompliance />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/reviews" element={<Reviews />} />
+            <Route path="/find-doctors" element={<FindDoctors />} />
             <Route 
               path="/patient" 
               element={

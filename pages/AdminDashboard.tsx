@@ -5,7 +5,7 @@ import { UserRole, CaseStatus } from '../types';
 import { Trash2, FileText, CheckCircle, Clock, AlertCircle, Search, Filter } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { users, cases, transactions, resetDemo } = useApp();
+  const { users, cases, transactions, resetDemo, t } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -51,32 +51,32 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-900">Admin Overview</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t('admin.title')}</h1>
         <button 
             onClick={resetDemo}
             className="flex items-center gap-2 text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium transition"
         >
             <Trash2 className="h-4 w-4" />
-            Reset Demo Data
+            {t('admin.reset')}
         </button>
       </div>
       
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="text-slate-500 text-xs font-bold uppercase">Total Cases</h3>
+              <h3 className="text-slate-500 text-xs font-bold uppercase">{t('admin.kpi.totalCases')}</h3>
               <p className="text-3xl font-bold text-slate-900 mt-2">{cases.length}</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="text-slate-500 text-xs font-bold uppercase">Active Doctors</h3>
+              <h3 className="text-slate-500 text-xs font-bold uppercase">{t('admin.kpi.activeDoctors')}</h3>
               <p className="text-3xl font-bold text-slate-900 mt-2">{users.filter(u => u.role === UserRole.DOCTOR).length}</p>
           </div>
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="text-slate-500 text-xs font-bold uppercase">Total Volume</h3>
+              <h3 className="text-slate-500 text-xs font-bold uppercase">{t('admin.kpi.volume')}</h3>
               <p className="text-3xl font-bold text-green-600 mt-2">${totalRevenue.toFixed(2)}</p>
           </div>
            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="text-slate-500 text-xs font-bold uppercase">Net Profit (30%)</h3>
+              <h3 className="text-slate-500 text-xs font-bold uppercase">{t('admin.kpi.profit')}</h3>
               <p className="text-3xl font-bold text-primary-600 mt-2">${platformProfit.toFixed(2)}</p>
           </div>
       </div>
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-96">
-              <h3 className="font-bold text-slate-800 mb-4">Cases by Specialty</h3>
+              <h3 className="font-bold text-slate-800 mb-4">{t('admin.chart.specialty')}</h3>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
@@ -108,7 +108,7 @@ const AdminDashboard = () => {
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-96">
-              <h3 className="font-bold text-slate-800 mb-4">Top Doctors (Cases Closed)</h3>
+              <h3 className="font-bold text-slate-800 mb-4">{t('admin.chart.topDocs')}</h3>
                <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                     data={doctorData}
@@ -132,45 +132,45 @@ const AdminDashboard = () => {
       {/* Recent Cases Log */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h3 className="font-bold text-slate-800">Recent Case Submissions</h3>
+              <h3 className="font-bold text-slate-800">{t('admin.table.title')}</h3>
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                    <div className="relative w-full sm:w-48">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <div className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 text-slate-400">
                           <Filter className="h-4 w-4" />
                       </div>
                       <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none appearance-none bg-white cursor-pointer"
+                          className="w-full pl-9 rtl:pl-4 rtl:pr-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none appearance-none bg-white cursor-pointer"
                       >
-                          <option value="ALL">All Statuses</option>
-                          <option value={CaseStatus.OPEN}>Open</option>
-                          <option value={CaseStatus.CLOSED}>Closed</option>
-                          <option value={CaseStatus.PENDING_INFO}>Pending Info</option>
+                          <option value="ALL">{t('admin.filter.all')}</option>
+                          <option value={CaseStatus.OPEN}>{t('status.open')}</option>
+                          <option value={CaseStatus.CLOSED}>{t('status.closed')}</option>
+                          <option value={CaseStatus.PENDING_INFO}>{t('status.pendingInfo')}</option>
                       </select>
                   </div>
                   <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Search className="absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <input 
                           type="text"
-                          placeholder="Search patient or ID..."
+                          placeholder={t('admin.searchPlaceholder')}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                          className="w-full pl-9 rtl:pl-4 rtl:pr-9 pr-4 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                       />
                   </div>
               </div>
           </div>
           <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
+              <table className="w-full text-sm text-left rtl:text-right">
                   <thead className="bg-slate-50 text-slate-500 font-medium">
                       <tr>
-                          <th className="px-6 py-3">Case ID</th>
-                          <th className="px-6 py-3">Patient</th>
-                          <th className="px-6 py-3">Specialty</th>
-                          <th className="px-6 py-3">Status</th>
-                          <th className="px-6 py-3">Doctor</th>
-                          <th className="px-6 py-3">Date</th>
+                          <th className="px-6 py-3">{t('admin.th.caseId')}</th>
+                          <th className="px-6 py-3">{t('admin.th.patient')}</th>
+                          <th className="px-6 py-3">{t('admin.th.specialty')}</th>
+                          <th className="px-6 py-3">{t('admin.th.status')}</th>
+                          <th className="px-6 py-3">{t('admin.th.doctor')}</th>
+                          <th className="px-6 py-3">{t('admin.th.date')}</th>
                       </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -194,11 +194,13 @@ const AdminDashboard = () => {
                                         {c.status === CaseStatus.OPEN && <Clock className="h-3 w-3" />}
                                         {c.status === CaseStatus.CLOSED && <CheckCircle className="h-3 w-3" />}
                                         {c.status === CaseStatus.PENDING_INFO && <AlertCircle className="h-3 w-3" />}
-                                        {c.status}
+                                        {c.status === CaseStatus.OPEN ? t('status.open') : 
+                                         c.status === CaseStatus.CLOSED ? t('status.closed') : 
+                                         c.status === CaseStatus.PENDING_INFO ? t('status.pendingInfo') : c.status}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-slate-600">
-                                    {doctor ? doctor.name : <span className="text-slate-400 italic">Unassigned</span>}
+                                    {doctor ? doctor.name : <span className="text-slate-400 italic">{t('admin.unassigned')}</span>}
                                 </td>
                                 <td className="px-6 py-4 text-slate-500">
                                     {new Date(c.createdAt).toLocaleDateString()}
@@ -209,7 +211,7 @@ const AdminDashboard = () => {
                       {filteredCases.length === 0 && (
                           <tr>
                               <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                  No cases found matching filters.
+                                  {t('admin.noCases')}
                               </td>
                           </tr>
                       )}

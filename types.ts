@@ -63,6 +63,7 @@ export interface Case {
   assignedDoctorId?: string; // If null, it's in the general pool
   opinion?: Opinion;
   patientRating?: number;
+  patientFeedback?: string;
 }
 
 export interface Transaction {

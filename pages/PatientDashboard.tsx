@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Specialty, Case, CaseStatus, User, UserRole } from '../types';
-import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users } from 'lucide-react';
+import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users, Quote } from 'lucide-react';
 import { refineSymptoms } from '../services/geminiService';
 
 const PatientDashboard = () => {
@@ -15,6 +15,11 @@ const PatientDashboard = () => {
   const [specialty, setSpecialty] = useState<Specialty>(Specialty.GENERAL);
   const [isRefining, setIsRefining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Rating State
+  const [ratingCaseId, setRatingCaseId] = useState<string | null>(null);
+  const [tempRating, setTempRating] = useState(0);
+  const [tempFeedback, setTempFeedback] = useState('');
 
   const myCases = cases.filter(c => c.patientId === currentUser?.id);
   const doctors = users.filter(u => u.role === UserRole.DOCTOR);
@@ -41,6 +46,15 @@ const PatientDashboard = () => {
     if (success) {
       setActiveTab('list');
       setSymptoms('');
+    }
+  };
+
+  const submitReview = () => {
+    if (ratingCaseId && tempRating > 0) {
+        rateDoctor(ratingCaseId, tempRating, tempFeedback);
+        setRatingCaseId(null);
+        setTempRating(0);
+        setTempFeedback('');
     }
   };
 
@@ -164,6 +178,43 @@ const PatientDashboard = () => {
                                     {selectedDoctor.name} is a highly experienced {selectedDoctor.specialty} specialist practicing at {selectedDoctor.hospital}. 
                                     With a focus on patient-centered care and evidence-based medicine, they have successfully provided second opinions for over {selectedDoctor.casesClosed} complex medical cases.
                                 </p>
+                            </div>
+
+                            <div className="border-t border-slate-100 pt-6">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4">Patient Reviews</h3>
+                                <div className="space-y-4">
+                                    {cases
+                                        .filter(c => c.opinion?.doctorId === selectedDoctor.id && c.patientRating)
+                                        .sort((a,b) => new Date(b.opinion?.createdAt || '').getTime() - new Date(a.opinion?.createdAt || '').getTime())
+                                        .slice(0, 3)
+                                        .map(reviewCase => (
+                                            <div key={reviewCase.id} className="bg-slate-50 rounded-lg p-4 border border-slate-100">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex text-yellow-500">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star key={i} className={`h-3 w-3 ${i < (reviewCase.patientRating || 0) ? 'fill-current' : 'text-slate-300'}`} />
+                                                            ))}
+                                                        </div>
+                                                        <span className="text-xs text-slate-500 font-bold">{reviewCase.patientRating}.0</span>
+                                                    </div>
+                                                    <span className="text-xs text-slate-400">
+                                                        {new Date(reviewCase.opinion?.createdAt || '').toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-700 italic">
+                                                    "{reviewCase.patientFeedback || "No text review provided."}"
+                                                </p>
+                                                <p className="text-xs text-slate-400 mt-2 font-medium">
+                                                    - Verified Patient ({reviewCase.patientName.split(' ')[0]}...)
+                                                </p>
+                                            </div>
+                                        ))
+                                    }
+                                    {cases.filter(c => c.opinion?.doctorId === selectedDoctor.id && c.patientRating).length === 0 && (
+                                        <p className="text-slate-500 italic">No reviews yet.</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -290,6 +341,8 @@ const PatientDashboard = () => {
               )}
               {myCases.map(c => {
                   const reviewer = users.find(u => u.id === c.opinion?.doctorId);
+                  const isRatingThis = ratingCaseId === c.id;
+
                   return (
                     <div key={c.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                         <div className="flex justify-between items-start mb-4">
@@ -345,24 +398,73 @@ const PatientDashboard = () => {
                         {c.status === CaseStatus.CLOSED && c.opinion && !c.patientRating && (
                              <div className="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
                                 <p className="text-sm font-bold text-slate-700 mb-2">How was your experience?</p>
-                                <div className="flex gap-2">
-                                    {[1,2,3,4,5].map(star => (
-                                        <button 
-                                            key={star} 
-                                            onClick={() => rateDoctor(c.id, star)}
-                                            className="p-1 hover:scale-110 transition group"
-                                            title={`Rate ${star} Stars`}
-                                        >
-                                            <Star className="h-6 w-6 text-yellow-300 hover:text-yellow-500 fill-current" />
-                                        </button>
-                                    ))}
-                                </div>
+                                {!isRatingThis ? (
+                                    <div className="flex gap-2">
+                                        {[1,2,3,4,5].map(star => (
+                                            <button 
+                                                key={star} 
+                                                onClick={() => {
+                                                    setRatingCaseId(c.id);
+                                                    setTempRating(star);
+                                                }}
+                                                className="p-1 hover:scale-110 transition group"
+                                                title={`Rate ${star} Stars`}
+                                            >
+                                                <Star className="h-6 w-6 text-yellow-300 hover:text-yellow-500 fill-current" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3 animate-in fade-in duration-300">
+                                         <div className="flex gap-2 mb-2">
+                                            {[1,2,3,4,5].map(star => (
+                                                <button 
+                                                    key={star} 
+                                                    onClick={() => setTempRating(star)}
+                                                    className="p-1 transition"
+                                                >
+                                                    <Star className={`h-6 w-6 ${star <= tempRating ? 'text-yellow-500 fill-yellow-500' : 'text-slate-300'}`} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <textarea 
+                                            value={tempFeedback}
+                                            onChange={(e) => setTempFeedback(e.target.value)}
+                                            placeholder="Write a brief review about your experience (optional)..."
+                                            className="w-full text-sm p-3 rounded border border-slate-300 focus:ring-2 focus:ring-yellow-400 outline-none"
+                                            rows={2}
+                                        />
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={submitReview}
+                                                className="bg-yellow-500 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-yellow-600"
+                                            >
+                                                Submit Review
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setRatingCaseId(null);
+                                                    setTempRating(0);
+                                                    setTempFeedback('');
+                                                }}
+                                                className="text-slate-500 px-4 py-1.5 rounded text-sm hover:bg-slate-100"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                         {c.patientRating && (
-                            <div className="mt-4 flex items-center gap-2 text-sm font-bold text-yellow-600">
-                                <Star className="h-4 w-4 fill-current" />
-                                <span>You rated this consultation {c.patientRating}/5</span>
+                            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                <div className="flex items-center gap-2 text-sm font-bold text-yellow-600 mb-1">
+                                    <Star className="h-4 w-4 fill-current" />
+                                    <span>You rated this consultation {c.patientRating}/5</span>
+                                </div>
+                                {c.patientFeedback && (
+                                    <p className="text-sm text-slate-600 italic">"{c.patientFeedback}"</p>
+                                )}
                             </div>
                         )}
                     </div>
