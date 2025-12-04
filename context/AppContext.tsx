@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Case, Transaction, UserRole, Language, CaseStatus, Opinion } from '../types';
-import { MOCK_USERS, MOCK_CASES, TRANSLATIONS, CASE_FEE, DOCTOR_PAYOUT, PLATFORM_FEE } from '../constants';
+import { MOCK_USERS, MOCK_CASES, TRANSLATIONS, DOCTOR_PAYOUT, CASE_FEE } from '../constants';
+import { supabase } from '../services/supabase';
 
 interface AppContextType {
   currentUser: User | null;
@@ -9,8 +10,9 @@ interface AppContextType {
   cases: Case[];
   transactions: Transaction[];
   language: Language;
+  isLoading: boolean;
   t: (key: string) => string;
-  login: (email: string, password?: string) => Promise<string | null>; // Returns error string or null
+  login: (email: string, password?: string) => Promise<string | null>;
   logout: () => void;
   register: (user: Partial<User>) => Promise<boolean>;
   updateUserStatus: (userId: string, isApproved: boolean) => void;
@@ -40,28 +42,91 @@ const loadState = <T,>(key: string, fallback: T): T => {
 };
 
 export const AppProvider = ({ children }: { children?: ReactNode }) => {
-  // Initialize state from LocalStorage or Fallback Mock Data
-  const [currentUser, setCurrentUser] = useState<User | null>(() => loadState('app_currentUser', null));
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(() => loadState('app_users', MOCK_USERS));
   const [cases, setCases] = useState<Case[]>(() => loadState('app_cases', MOCK_CASES));
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadState('app_transactions', []));
   const [language, setLanguage] = useState<Language>(() => loadState('app_language', 'en'));
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Persistence Effects
+  // Initialize App (Check for Supabase Session or LocalStorage)
   useEffect(() => {
-    localStorage.setItem('app_currentUser', JSON.stringify(currentUser));
+    const initApp = async () => {
+      setIsLoading(true);
+      
+      if (supabase) {
+        // --- REAL AUTH MODE ---
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Fetch full profile from DB
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profile) {
+            // Map DB snake_case to TS camelCase
+            const mappedUser: User = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                role: profile.role as UserRole,
+                walletBalance: profile.wallet_balance || 0,
+                avatarUrl: profile.avatar_url,
+                isApproved: profile.is_approved,
+                specialty: profile.specialty,
+                hospital: profile.hospital,
+                country: profile.country,
+                linkedin: profile.linkedin,
+                bio: profile.bio,
+                rating: profile.rating,
+                casesClosed: profile.cases_closed,
+                bonusPoints: profile.bonus_points,
+                createdAt: profile.created_at
+            };
+            setCurrentUser(mappedUser);
+          }
+        }
+      } else {
+        // --- DEMO MODE ---
+        const localUser = loadState<User | null>('app_currentUser', null);
+        if (localUser) setCurrentUser(localUser);
+      }
+      setIsLoading(false);
+    };
+
+    initApp();
+
+    // Listen for Auth Changes (Supabase)
+    const { data: authListener } = supabase?.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+            setCurrentUser(null);
+        } else if (event === 'SIGNED_IN' && session?.user) {
+             // Logic handled in initApp usually, but could force refetch here
+        }
+    }) || { data: { subscription: { unsubscribe: () => {} } } };
+
+    return () => {
+        authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Persistence Effects (Only for Demo Mode mostly)
+  useEffect(() => {
+    if (!supabase) localStorage.setItem('app_currentUser', JSON.stringify(currentUser));
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('app_users', JSON.stringify(users));
+    if (!supabase) localStorage.setItem('app_users', JSON.stringify(users));
   }, [users]);
 
   useEffect(() => {
-    localStorage.setItem('app_cases', JSON.stringify(cases));
+    if (!supabase) localStorage.setItem('app_cases', JSON.stringify(cases));
   }, [cases]);
 
   useEffect(() => {
-    localStorage.setItem('app_transactions', JSON.stringify(transactions));
+    if (!supabase) localStorage.setItem('app_transactions', JSON.stringify(transactions));
   }, [transactions]);
 
   useEffect(() => {
@@ -79,30 +144,76 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   };
 
   const login = async (email: string, password?: string): Promise<string | null> => {
+    // 1. Try Real Auth
+    if (supabase) {
+        if (!password) return "Password required for real auth.";
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return error.message;
+        
+        // Profile fetch handled by onAuthStateChange or reload, but let's manual fetch for speed
+        if (data.user) {
+             const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+             if (profile && !profile.is_approved) return "Account pending approval.";
+             window.location.reload(); // Simple way to sync all states
+             return null;
+        }
+    }
+
+    // 2. Fallback to Mock Auth
     const user = users.find(u => u.email === email);
     
-    if (!user) {
-        return "User not found.";
-    }
-
-    if (password && user.password && user.password !== password) {
-        return "Invalid password.";
-    }
-
-    if (!user.isApproved) {
-        return "Your account is pending admin approval.";
-    }
+    if (!user) return "User not found.";
+    if (password && user.password && user.password !== password) return "Invalid password.";
+    if (!user.isApproved) return "Your account is pending admin approval.";
 
     setCurrentUser(user);
-    return null; // No error
+    return null; 
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setCurrentUser(null);
+    if (!supabase) localStorage.removeItem('app_currentUser');
+  };
 
   const register = async (userData: Partial<User>): Promise<boolean> => {
-     if (users.find(u => u.email === userData.email)) {
-         return false; // User exists
+     // 1. Try Real Auth
+     if (supabase && userData.email && userData.password) {
+        // A. Create Auth User
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: userData.email,
+            password: userData.password,
+        });
+
+        if (authError || !authData.user) {
+            console.error("Supabase Auth Error:", authError);
+            return false;
+        }
+
+        // B. Create Profile Record
+        const { error: profileError } = await supabase.from('profiles').insert([{
+            id: authData.user.id,
+            email: userData.email,
+            name: userData.name,
+            role: userData.role,
+            is_approved: userData.role === UserRole.PATIENT, // Auto-approve patients
+            avatar_url: userData.avatarUrl,
+            specialty: userData.specialty,
+            hospital: userData.hospital,
+            country: userData.country,
+            linkedin: userData.linkedin,
+            bio: userData.bio
+        }]);
+
+        if (profileError) {
+            console.error("Profile Creation Error:", profileError);
+            return false;
+        }
+        return true;
      }
+
+     // 2. Fallback Mock Auth
+     if (users.find(u => u.email === userData.email)) return false;
 
      const newUser: User = {
          id: `u-${Date.now()}`,
@@ -111,35 +222,43 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
          password: userData.password || 'password123',
          role: userData.role || UserRole.PATIENT,
          walletBalance: 0,
-         avatarUrl: 'https://via.placeholder.com/200',
-         isApproved: userData.role === UserRole.PATIENT, // Patients auto-approve, doctors need approval
+         avatarUrl: userData.avatarUrl || 'https://via.placeholder.com/200',
+         isApproved: userData.role === UserRole.PATIENT,
          createdAt: new Date().toISOString(),
-         ...userData // Spread ensures fields like linkedin, bio, etc are included
+         ...userData
      };
 
      setUsers(prev => [...prev, newUser]);
-     // Log them in immediately if patient, else wait for approval
-     if (newUser.isApproved) {
-         setCurrentUser(newUser);
-     }
+     if (newUser.isApproved) setCurrentUser(newUser);
      return true;
   };
 
   const updateUserStatus = (userId: string, isApproved: boolean) => {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
+      // In real app, would call supabase.from('profiles').update({ is_approved: isApproved }).eq('id', userId)
   };
 
   const updateUserProfile = async (userId: string, updates: Partial<User>) => {
+    if (supabase) {
+        // Map back to snake_case for DB
+        const dbUpdates: any = {};
+        if (updates.bio) dbUpdates.bio = updates.bio;
+        if (updates.hospital) dbUpdates.hospital = updates.hospital;
+        if (updates.country) dbUpdates.country = updates.country;
+        if (updates.linkedin) dbUpdates.linkedin = updates.linkedin;
+        if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
+
+        await supabase.from('profiles').update(dbUpdates).eq('id', userId);
+    }
+    
+    // Update local state for UI responsiveness
     const updatedUsers = users.map(u => {
       if (u.id === userId) {
         return { ...u, ...updates };
       }
       return u;
     });
-    
     setUsers(updatedUsers);
-    
-    // If updating self, update currentUser state too
     if (currentUser && currentUser.id === userId) {
       setCurrentUser({ ...currentUser, ...updates });
     }
@@ -147,7 +266,6 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
   const deleteUser = (userId: string) => {
       setUsers(prev => prev.filter(u => u.id !== userId));
-      // Also cleanup auth if deleting self (rare)
       if (currentUser?.id === userId) logout();
   };
 
@@ -158,13 +276,10 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
   const depositFunds = (amount: number) => {
     if (!currentUser) return;
-    
-    // Update local user state and master users list
     const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance + amount };
     setCurrentUser(updatedUser);
     setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
 
-    // Log transaction
     const tx: Transaction = {
       id: `tx-${Date.now()}`,
       userId: currentUser.id,
@@ -177,20 +292,16 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   };
 
   const withdrawFunds = async (amount: number): Promise<boolean> => {
-      if (!currentUser) return false;
-      if (currentUser.walletBalance < amount) return false;
-
-      // Deduct funds
+      if (!currentUser || currentUser.walletBalance < amount) return false;
       const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance - amount };
       setCurrentUser(updatedUser);
       setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-
-      // Log transaction
+      
       const tx: Transaction = {
         id: `tx-wd-${Date.now()}`,
         userId: currentUser.id,
         amount: -amount,
-        type: 'PAYOUT', // Reusing PAYOUT type, or could add WITHDRAWAL
+        type: 'PAYOUT',
         timestamp: new Date().toISOString(),
         description: 'Funds Withdrawal'
       };
@@ -200,27 +311,15 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
   const createCase = async (caseData: Partial<Case>): Promise<boolean> => {
     if (!currentUser || currentUser.role !== UserRole.PATIENT) return false;
-
     if (currentUser.walletBalance < CASE_FEE) {
       alert("Insufficient funds. Please deposit $40.");
       return false;
     }
-
+    
     // Deduct Funds
     const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance - CASE_FEE };
     setCurrentUser(updatedUser);
     setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-
-    // Create Transaction (Escrow hold logic implied by deduction)
-    const tx: Transaction = {
-      id: `tx-${Date.now()}`,
-      userId: currentUser.id,
-      amount: -CASE_FEE,
-      type: 'CASE_FEE',
-      timestamp: new Date().toISOString(),
-      description: `Case Creation Fee: ${caseData.specialty}`
-    };
-    setTransactions(prev => [tx, ...prev]);
 
     // Create Case
     const newCase: Case = {
@@ -242,7 +341,6 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const submitOpinion = async (caseId: string, opinion: Opinion, isRare: boolean = false) => {
     if (!currentUser || currentUser.role !== UserRole.DOCTOR) return;
 
-    // Update Case
     setCases(prev => prev.map(c => {
       if (c.id === caseId) {
         return {
@@ -257,33 +355,18 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     }));
 
     if (opinion.decision !== 'MoreTests') {
-        // Payout to Doctor and increment cases closed
         const updatedDoctor = { 
           ...currentUser, 
           walletBalance: currentUser.walletBalance + DOCTOR_PAYOUT, 
           casesClosed: (currentUser.casesClosed || 0) + 1 
         };
-        
         setCurrentUser(updatedDoctor);
         setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedDoctor : u));
-
-        // Log Payout
-        const tx: Transaction = {
-            id: `tx-payout-${Date.now()}`,
-            userId: currentUser.id,
-            amount: DOCTOR_PAYOUT,
-            type: 'PAYOUT',
-            timestamp: new Date().toISOString(),
-            description: `Payout for Case #${caseId}`
-        };
-        setTransactions(prev => [tx, ...prev]);
     }
   };
 
   const rateDoctor = (caseId: string, rating: number, feedback?: string) => {
-    // 1. Update the Case with the new rating
     let doctorId: string | undefined;
-
     const updatedCases = cases.map(c => {
         if (c.id === caseId) {
             doctorId = c.opinion?.doctorId;
@@ -294,13 +377,10 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     setCases(updatedCases);
 
     if (!doctorId) return;
-
-    // 2. Recalculate Doctor's Average Rating
     const doctorCases = updatedCases.filter(c => c.opinion?.doctorId === doctorId && c.patientRating);
     const totalRating = doctorCases.reduce((acc, c) => acc + (c.patientRating || 0), 0);
     const newAverage = doctorCases.length > 0 ? totalRating / doctorCases.length : rating;
 
-    // 3. Update the Doctor User Object & Award Bonus Points for 5-Star Ratings
     setUsers(prev => prev.map(u => {
         if (u.id === doctorId) {
             const bonusAward = rating === 5 ? 5 : 0;
@@ -321,6 +401,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       cases,
       transactions,
       language,
+      isLoading,
       t,
       login,
       logout,

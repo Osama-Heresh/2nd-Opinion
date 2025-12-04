@@ -40,7 +40,7 @@ const Register = () => {
     setLoading(true);
     setError('');
 
-    setTimeout(async () => {
+    try {
         const success = await register({
             ...formData,
             role,
@@ -52,7 +52,6 @@ const Register = () => {
             avatarUrl: role === UserRole.DOCTOR && formData.avatarUrl ? formData.avatarUrl : 'https://via.placeholder.com/200'
         });
         
-        setLoading(false);
         if (success) {
             if (role === UserRole.PATIENT) {
                 navigate('/patient');
@@ -62,9 +61,13 @@ const Register = () => {
                 navigate('/login');
             }
         } else {
-            setError("Email already in use.");
+            setError("Registration failed. Email might be in use.");
         }
-    }, 800);
+    } catch (err) {
+        setError("An unexpected error occurred.");
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (

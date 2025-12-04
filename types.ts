@@ -6,12 +6,30 @@ export enum UserRole {
 }
 
 export enum Specialty {
+  // Core / Existing
+  GENERAL = 'General Practice',
   CARDIOLOGY = 'Cardiology',
   DERMATOLOGY = 'Dermatology',
   NEUROLOGY = 'Neurology',
   ORTHOPEDICS = 'Orthopedics',
   PEDIATRICS = 'Pediatrics',
-  GENERAL = 'General Practice'
+  
+  // New Additions
+  RHEUMATOLOGY = 'Rheumatology',
+  GASTROENTEROLOGY = 'Gastroenterology',
+  ALLERGY_IMMUNOLOGY = 'Allergy & Immunology',
+  PLASTIC_SURGERY = 'Plastic & Reconstructive Surgery',
+  SPORTS_MEDICINE = 'Sports Medicine',
+  GERIATRICS = 'Geriatrics',
+  OCCUPATIONAL = 'Occupational Medicine',
+  RADIOLOGY = 'Radiology',
+  PATHOLOGY = 'Pathology',
+  PALLIATIVE = 'Palliative Care',
+  GENETIC = 'Genetic Medicine',
+  SEXUAL_HEALTH = 'Sexual Health',
+  SLEEP = 'Sleep Medicine',
+  PAIN_MGMT = 'Pain Management',
+  DERMATO_COSMETOLOGY = 'Dermato-Cosmetology'
 }
 
 export enum CaseStatus {
@@ -22,14 +40,14 @@ export enum CaseStatus {
 }
 
 export interface User {
-  id: string;
+  id: string; // Can be UUID (Supabase) or simple string (Mock)
   name: string;
   email: string;
-  password?: string; // In real app, this is hashed. Plaintext for demo.
+  password?: string; // Optional: Only used for Mock mode or during initial registration object
   role: UserRole;
   walletBalance: number;
   avatarUrl?: string;
-  isApproved: boolean; // For Doctors needing admin approval
+  isApproved: boolean;
   createdAt: string;
   // Doctor specific
   specialty?: Specialty;
@@ -45,7 +63,7 @@ export interface User {
 export interface CaseFile {
   name: string;
   type: string;
-  url: string; // In a real app, this would be a blob URL or S3 link
+  url: string;
 }
 
 export interface Opinion {
@@ -65,7 +83,7 @@ export interface Case {
   symptoms: string;
   files: CaseFile[];
   createdAt: string;
-  assignedDoctorId?: string; // If null, it's in the general pool
+  assignedDoctorId?: string;
   opinion?: Opinion;
   patientRating?: number;
   patientFeedback?: string;
