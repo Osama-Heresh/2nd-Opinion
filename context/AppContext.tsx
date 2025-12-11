@@ -252,7 +252,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         }
 
         // B. Create User Record
-        const { error: profileError } = await supabase.from('users').insert([{
+        const { data: newUserData, error: profileError } = await supabase.from('users').insert([{
             id: authData.user.id,
             email: userData.email,
             name: userData.name,
@@ -264,12 +264,37 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             country: userData.country,
             linkedin: userData.linkedin,
             bio: userData.bio
-        }]);
+        }]).select().single();
 
         if (profileError) {
             console.error("Profile Creation Error:", profileError);
             return false;
         }
+
+        // C. Update local state with new user
+        if (newUserData) {
+            const mappedUser: User = {
+                id: newUserData.id,
+                email: newUserData.email,
+                name: newUserData.name,
+                role: newUserData.role as UserRole,
+                walletBalance: newUserData.wallet_balance || 0,
+                avatarUrl: newUserData.avatar_url,
+                isApproved: newUserData.is_approved,
+                specialty: newUserData.specialty,
+                hospital: newUserData.hospital,
+                country: newUserData.country,
+                linkedin: newUserData.linkedin,
+                bio: newUserData.bio,
+                rating: newUserData.rating,
+                casesClosed: newUserData.cases_closed,
+                bonusPoints: newUserData.bonus_points,
+                createdAt: newUserData.created_at
+            };
+            setUsers(prev => [mappedUser, ...prev]);
+            if (mappedUser.isApproved) setCurrentUser(mappedUser);
+        }
+
         return true;
      }
 
@@ -297,8 +322,33 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const updateUserStatus = async (userId: string, isApproved: boolean) => {
       if (supabase) {
         await supabase.from('users').update({ is_approved: isApproved }).eq('id', userId);
+
+        // Refetch users to ensure consistency
+        const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        if (allUsersData) {
+          const mappedUsers = allUsersData.map((profile: any) => ({
+            id: profile.id,
+            email: profile.email,
+            name: profile.name,
+            role: profile.role as UserRole,
+            walletBalance: profile.wallet_balance || 0,
+            avatarUrl: profile.avatar_url,
+            isApproved: profile.is_approved,
+            specialty: profile.specialty,
+            hospital: profile.hospital,
+            country: profile.country,
+            linkedin: profile.linkedin,
+            bio: profile.bio,
+            rating: profile.rating,
+            casesClosed: profile.cases_closed,
+            bonusPoints: profile.bonus_points,
+            createdAt: profile.created_at
+          }));
+          setUsers(mappedUsers);
+        }
+      } else {
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
       }
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
   };
 
   const updateUserProfile = async (userId: string, updates: Partial<User>) => {
@@ -331,8 +381,33 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       if (supabase) {
         await supabase.from('users').delete().eq('id', userId);
         await supabase.auth.admin.deleteUser(userId);
+
+        // Refetch users to ensure consistency
+        const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        if (allUsersData) {
+          const mappedUsers = allUsersData.map((profile: any) => ({
+            id: profile.id,
+            email: profile.email,
+            name: profile.name,
+            role: profile.role as UserRole,
+            walletBalance: profile.wallet_balance || 0,
+            avatarUrl: profile.avatar_url,
+            isApproved: profile.is_approved,
+            specialty: profile.specialty,
+            hospital: profile.hospital,
+            country: profile.country,
+            linkedin: profile.linkedin,
+            bio: profile.bio,
+            rating: profile.rating,
+            casesClosed: profile.cases_closed,
+            bonusPoints: profile.bonus_points,
+            createdAt: profile.created_at
+          }));
+          setUsers(mappedUsers);
+        }
+      } else {
+        setUsers(prev => prev.filter(u => u.id !== userId));
       }
-      setUsers(prev => prev.filter(u => u.id !== userId));
       if (currentUser?.id === userId) logout();
   };
 
