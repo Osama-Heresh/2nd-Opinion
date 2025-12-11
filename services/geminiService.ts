@@ -1,43 +1,78 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Case } from '../types';
+import { supabase } from './supabase';
 
-// Initialize Gemini Client
-// NOTE: In a production app, never expose API keys on the client. 
-// This is for demonstration purposes as requested by the persona guidance.
-const ai = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export const refineSymptoms = async (rawText: string): Promise<string> => {
   if (!rawText || rawText.length < 5) return rawText;
 
   try {
-    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-    const result = await model.generateContent(
-      `You are a helpful medical assistant. Rewrite the following patient symptom description to be more clinical, clear, and concise for a doctor to read. Maintain the original meaning. \n\nPatient Input: "${rawText}"`
-    );
-    const response = await result.response;
-    return response.text() || rawText;
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      console.warn('No active session for API call');
+      return rawText;
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/refine-symptoms`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rawText })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      if (response.status === 429) {
+        console.warn('Rate limit reached:', errorData.error);
+        return errorData.fallback || rawText;
+      }
+      throw new Error(errorData.error || 'Failed to refine symptoms');
+    }
+
+    const data = await response.json();
+    return data.refined || rawText;
   } catch (error) {
     console.error("Gemini Refine Error:", error);
-    return rawText; // Fallback to original
+    return rawText;
   }
 };
 
 export const analyzeCaseForDoctor = async (c: Case): Promise<string> => {
   try {
-    const prompt = `
-      Act as a senior medical consultant. Analyze the following case data and provide a brief summary of potential differential diagnoses to consider.
-      Do NOT provide a final diagnosis, just areas for the doctor to investigate.
+    const { data: { session } } = await supabase.auth.getSession();
 
-      Specialty: ${c.specialty}
-      Symptoms: ${c.symptoms}
-      Patient Name: ${c.patientName}
-    `;
+    if (!session) {
+      console.warn('No active session for API call');
+      return "AI analysis requires authentication.";
+    }
 
-    const model = ai.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-case`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        specialty: c.specialty,
+        symptoms: c.symptoms,
+        patientName: c.patientName
+      })
+    });
 
-    return response.text() || "AI Analysis unavailable.";
+    if (!response.ok) {
+      const errorData = await response.json();
+      if (response.status === 429) {
+        console.warn('Rate limit reached:', errorData.error);
+        return errorData.analysis || "AI analysis temporarily unavailable.";
+      }
+      throw new Error(errorData.error || 'Failed to analyze case');
+    }
+
+    const data = await response.json();
+    return data.analysis || "AI Analysis unavailable.";
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
     return "Could not generate AI analysis at this time.";
