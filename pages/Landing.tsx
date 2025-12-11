@@ -5,11 +5,11 @@ import { UserRole } from '../types';
 import { ShieldCheck, Stethoscope, Clock, Star, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 const Landing = () => {
-  const { login, currentUser, t, users } = useApp();
+  const { login, currentUser, t, users, isLoading } = useApp();
   const navigate = useNavigate();
 
   // Redirect if already logged in (Handled by buttons now, but good to check state)
-  
+
   const handleLogin = (email: string) => {
     login(email);
     // Navigation happens automatically via ProtectedRoute logic or manual button click in Hero
@@ -215,26 +215,37 @@ const Landing = () => {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-                {topDoctors.map((doc, idx) => (
-                    <div key={doc.id} className="p-6 flex items-center gap-6 hover:bg-slate-50/80 transition group">
-                        <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : idx === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-700'}`}>
-                            #{idx + 1}
-                        </div>
-                        <img src={doc.avatarUrl} alt={doc.name} className="h-14 w-14 rounded-full object-cover border-2 border-white shadow-sm" />
-                        <div className="flex-1">
-                            <h4 className="font-bold text-lg text-slate-900 group-hover:text-primary-600 transition">{doc.name}</h4>
-                            <p className="text-sm text-slate-500 font-medium">{doc.specialty} • {doc.hospital}</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold mb-1">
-                                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                                {doc.rating}
-                            </div>
-                            <span className="text-xs text-slate-400">{doc.casesClosed} {t('landing.leaderboard.cases')}</span>
-                            {(doc.bonusPoints || 0) > 0 && <span className="text-xs text-purple-600 font-medium">+{doc.bonusPoints} {t('landing.leaderboard.bonus')}</span>}
-                        </div>
+                {isLoading ? (
+                    <div className="p-12 text-center text-slate-500">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-3"></div>
+                        Loading doctors...
                     </div>
-                ))}
+                ) : topDoctors.length === 0 ? (
+                    <div className="p-12 text-center text-slate-500">
+                        No doctors available yet
+                    </div>
+                ) : (
+                    topDoctors.map((doc, idx) => (
+                        <div key={doc.id} className="p-6 flex items-center gap-6 hover:bg-slate-50/80 transition group">
+                            <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm ${idx === 0 ? 'bg-yellow-100 text-yellow-700' : idx === 1 ? 'bg-slate-100 text-slate-600' : 'bg-orange-50 text-orange-700'}`}>
+                                #{idx + 1}
+                            </div>
+                            <img src={doc.avatarUrl} alt={doc.name} className="h-14 w-14 rounded-full object-cover border-2 border-white shadow-sm" />
+                            <div className="flex-1">
+                                <h4 className="font-bold text-lg text-slate-900 group-hover:text-primary-600 transition">{doc.name}</h4>
+                                <p className="text-sm text-slate-500 font-medium">{doc.specialty} • {doc.hospital}</p>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold mb-1">
+                                    <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                    {doc.rating}
+                                </div>
+                                <span className="text-xs text-slate-400">{doc.casesClosed} {t('landing.leaderboard.cases')}</span>
+                                {(doc.bonusPoints || 0) > 0 && <span className="text-xs text-purple-600 font-medium">+{doc.bonusPoints} {t('landing.leaderboard.bonus')}</span>}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
             
              {/* Admin Demo Button (Subtle) */}

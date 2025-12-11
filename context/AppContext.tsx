@@ -44,9 +44,9 @@ const loadState = <T,>(key: string, fallback: T): T => {
 
 export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(() => loadState('app_users', MOCK_USERS));
-  const [cases, setCases] = useState<Case[]>(() => loadState('app_cases', MOCK_CASES));
-  const [transactions, setTransactions] = useState<Transaction[]>(() => loadState('app_transactions', []));
+  const [users, setUsers] = useState<User[]>(() => supabase ? [] : loadState('app_users', MOCK_USERS));
+  const [cases, setCases] = useState<Case[]>(() => supabase ? [] : loadState('app_cases', MOCK_CASES));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => supabase ? [] : loadState('app_transactions', []));
   const [language, setLanguage] = useState<Language>(() => loadState('app_language', 'en'));
   const [isLoading, setIsLoading] = useState(true);
 
