@@ -54,7 +54,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => {
     const initApp = async () => {
       setIsLoading(true);
-      
+
       if (supabase) {
         // --- REAL AUTH MODE ---
         const { data: { session } } = await supabase.auth.getSession();
@@ -65,7 +65,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             .select('*')
             .eq('id', session.user.id)
             .maybeSingle();
-            
+
           if (profile) {
             // Map DB snake_case to TS camelCase
             const mappedUser: User = {
@@ -88,6 +88,66 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             };
             setCurrentUser(mappedUser);
           }
+        }
+
+        // Fetch all users from DB
+        const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        if (allUsersData) {
+          const mappedUsers = allUsersData.map((profile: any) => ({
+            id: profile.id,
+            email: profile.email,
+            name: profile.name,
+            role: profile.role as UserRole,
+            walletBalance: profile.wallet_balance || 0,
+            avatarUrl: profile.avatar_url,
+            isApproved: profile.is_approved,
+            specialty: profile.specialty,
+            hospital: profile.hospital,
+            country: profile.country,
+            linkedin: profile.linkedin,
+            bio: profile.bio,
+            rating: profile.rating,
+            casesClosed: profile.cases_closed,
+            bonusPoints: profile.bonus_points,
+            createdAt: profile.created_at
+          }));
+          setUsers(mappedUsers);
+        }
+
+        // Fetch all cases from DB
+        const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
+        if (allCasesData) {
+          const mappedCases = allCasesData.map((c: any) => ({
+            id: c.id,
+            patientId: c.patient_id,
+            patientName: c.patient_name,
+            specialty: c.specialty,
+            status: c.status as CaseStatus,
+            symptoms: c.symptoms,
+            files: c.files || [],
+            createdAt: c.created_at,
+            assignedDoctorId: c.assigned_doctor_id,
+            opinion: c.opinion,
+            patientRating: c.patient_rating,
+            patientFeedback: c.patient_feedback,
+            isRare: c.is_rare
+          }));
+          setCases(mappedCases);
+        }
+
+        // Fetch all transactions from DB
+        const { data: allTransactionsData } = await supabase.from('transactions').select('*').order('timestamp', { ascending: false });
+        if (allTransactionsData) {
+          const mappedTransactions = allTransactionsData.map((tx: any) => ({
+            id: tx.id,
+            userId: tx.user_id,
+            amount: tx.amount,
+            type: tx.type,
+            timestamp: tx.timestamp,
+            description: tx.description,
+            caseId: tx.case_id
+          }));
+          setTransactions(mappedTransactions);
         }
       } else {
         // --- DEMO MODE ---
@@ -234,9 +294,11 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
      return true;
   };
 
-  const updateUserStatus = (userId: string, isApproved: boolean) => {
+  const updateUserStatus = async (userId: string, isApproved: boolean) => {
+      if (supabase) {
+        await supabase.from('users').update({ is_approved: isApproved }).eq('id', userId);
+      }
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
-      // In real app, would call supabase.from('users').update({ is_approved: isApproved }).eq('id', userId)
   };
 
   const updateUserProfile = async (userId: string, updates: Partial<User>) => {
@@ -265,7 +327,11 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     }
   };
 
-  const deleteUser = (userId: string) => {
+  const deleteUser = async (userId: string) => {
+      if (supabase) {
+        await supabase.from('users').delete().eq('id', userId);
+        await supabase.auth.admin.deleteUser(userId);
+      }
       setUsers(prev => prev.filter(u => u.id !== userId));
       if (currentUser?.id === userId) logout();
   };
@@ -275,8 +341,24 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     window.location.reload();
   };
 
-  const depositFunds = (amount: number) => {
+  const depositFunds = async (amount: number) => {
     if (!currentUser) return;
+
+    if (supabase) {
+      // Update wallet balance in DB
+      await supabase.from('users').update({
+        wallet_balance: currentUser.walletBalance + amount
+      }).eq('id', currentUser.id);
+
+      // Create transaction in DB
+      await supabase.from('transactions').insert({
+        user_id: currentUser.id,
+        amount: amount,
+        type: 'DEPOSIT',
+        description: 'Wallet Deposit'
+      });
+    }
+
     const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance + amount };
     setCurrentUser(updatedUser);
     setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
@@ -309,10 +391,26 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
   const withdrawFunds = async (amount: number): Promise<boolean> => {
       if (!currentUser || currentUser.walletBalance < amount) return false;
-      const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance - amount };
+
+      const newBalance = currentUser.walletBalance - amount;
+
+      if (supabase) {
+        await supabase.from('users').update({
+          wallet_balance: newBalance
+        }).eq('id', currentUser.id);
+
+        await supabase.from('transactions').insert({
+          user_id: currentUser.id,
+          amount: -amount,
+          type: 'PAYOUT',
+          description: 'Funds Withdrawal'
+        });
+      }
+
+      const updatedUser = { ...currentUser, walletBalance: newBalance };
       setCurrentUser(updatedUser);
       setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-      
+
       const tx: Transaction = {
         id: `tx-wd-${Date.now()}`,
         userId: currentUser.id,
@@ -331,13 +429,56 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       alert("Insufficient funds. Please deposit $40.");
       return false;
     }
-    
-    // Deduct Funds
+
+    if (supabase) {
+      // Deduct funds from wallet
+      const newBalance = currentUser.walletBalance - CASE_FEE;
+      await supabase.from('users').update({ wallet_balance: newBalance }).eq('id', currentUser.id);
+
+      // Create case in DB
+      const { data: newCaseData } = await supabase.from('cases').insert({
+        patient_id: currentUser.id,
+        patient_name: currentUser.name,
+        specialty: caseData.specialty,
+        status: CaseStatus.OPEN,
+        symptoms: caseData.symptoms || '',
+        files: caseData.files || []
+      }).select().single();
+
+      // Create transaction in DB
+      await supabase.from('transactions').insert({
+        user_id: currentUser.id,
+        amount: -CASE_FEE,
+        type: 'CASE_FEE',
+        description: `Case consultation fee`,
+        case_id: newCaseData?.id
+      });
+
+      if (newCaseData) {
+        const mappedCase: Case = {
+          id: newCaseData.id,
+          patientId: newCaseData.patient_id,
+          patientName: newCaseData.patient_name,
+          specialty: newCaseData.specialty,
+          status: newCaseData.status as CaseStatus,
+          symptoms: newCaseData.symptoms,
+          files: newCaseData.files || [],
+          createdAt: newCaseData.created_at
+        };
+        setCases(prev => [mappedCase, ...prev]);
+      }
+
+      const updatedUser = { ...currentUser, walletBalance: newBalance };
+      setCurrentUser(updatedUser);
+      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+      return true;
+    }
+
+    // Fallback for demo mode
     const updatedUser = { ...currentUser, walletBalance: currentUser.walletBalance - CASE_FEE };
     setCurrentUser(updatedUser);
     setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
 
-    // Create Case
     const newCase: Case = {
       id: `c${Date.now()}`,
       patientId: currentUser.id,
@@ -357,11 +498,51 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const submitOpinion = async (caseId: string, opinion: Opinion, isRare: boolean = false) => {
     if (!currentUser || currentUser.role !== UserRole.DOCTOR) return;
 
+    const newStatus = opinion.decision === 'MoreTests' ? CaseStatus.PENDING_INFO : CaseStatus.CLOSED;
+
+    if (supabase) {
+      // Update case in DB
+      await supabase.from('cases').update({
+        status: newStatus,
+        opinion: opinion,
+        assigned_doctor_id: currentUser.id,
+        is_rare: isRare
+      }).eq('id', caseId);
+
+      if (opinion.decision !== 'MoreTests') {
+        // Update doctor's wallet and cases closed
+        const newBalance = currentUser.walletBalance + DOCTOR_PAYOUT;
+        const newCasesClosed = (currentUser.casesClosed || 0) + 1;
+
+        await supabase.from('users').update({
+          wallet_balance: newBalance,
+          cases_closed: newCasesClosed
+        }).eq('id', currentUser.id);
+
+        // Create transaction
+        await supabase.from('transactions').insert({
+          user_id: currentUser.id,
+          amount: DOCTOR_PAYOUT,
+          type: 'PAYOUT',
+          description: `Payment for case #${caseId.slice(-6)}`,
+          case_id: caseId
+        });
+
+        const updatedDoctor = {
+          ...currentUser,
+          walletBalance: newBalance,
+          casesClosed: newCasesClosed
+        };
+        setCurrentUser(updatedDoctor);
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedDoctor : u));
+      }
+    }
+
     setCases(prev => prev.map(c => {
       if (c.id === caseId) {
         return {
           ...c,
-          status: opinion.decision === 'MoreTests' ? CaseStatus.PENDING_INFO : CaseStatus.CLOSED,
+          status: newStatus,
           opinion: opinion,
           assignedDoctorId: currentUser.id,
           isRare: isRare
@@ -369,19 +550,9 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       }
       return c;
     }));
-
-    if (opinion.decision !== 'MoreTests') {
-        const updatedDoctor = { 
-          ...currentUser, 
-          walletBalance: currentUser.walletBalance + DOCTOR_PAYOUT, 
-          casesClosed: (currentUser.casesClosed || 0) + 1 
-        };
-        setCurrentUser(updatedDoctor);
-        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedDoctor : u));
-    }
   };
 
-  const rateDoctor = (caseId: string, rating: number, feedback?: string) => {
+  const rateDoctor = async (caseId: string, rating: number, feedback?: string) => {
     let doctorId: string | undefined;
     const updatedCases = cases.map(c => {
         if (c.id === caseId) {
@@ -392,16 +563,33 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     });
     setCases(updatedCases);
 
+    if (supabase) {
+      await supabase.from('cases').update({
+        patient_rating: rating,
+        patient_feedback: feedback
+      }).eq('id', caseId);
+    }
+
     if (!doctorId) return;
     const doctorCases = updatedCases.filter(c => c.opinion?.doctorId === doctorId && c.patientRating);
     const totalRating = doctorCases.reduce((acc, c) => acc + (c.patientRating || 0), 0);
     const newAverage = doctorCases.length > 0 ? totalRating / doctorCases.length : rating;
+    const bonusAward = rating === 5 ? 5 : 0;
+
+    if (supabase) {
+      const doctor = users.find(u => u.id === doctorId);
+      if (doctor) {
+        await supabase.from('users').update({
+          rating: parseFloat(newAverage.toFixed(1)),
+          bonus_points: (doctor.bonusPoints || 0) + bonusAward
+        }).eq('id', doctorId);
+      }
+    }
 
     setUsers(prev => prev.map(u => {
         if (u.id === doctorId) {
-            const bonusAward = rating === 5 ? 5 : 0;
-            return { 
-              ...u, 
+            return {
+              ...u,
               rating: parseFloat(newAverage.toFixed(1)),
               bonusPoints: (u.bonusPoints || 0) + bonusAward
             };
