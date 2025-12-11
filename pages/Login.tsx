@@ -17,19 +17,20 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
-    // Simulate network delay
-    setTimeout(async () => {
-        const err = await login(email, password);
-        setLoading(false);
-        
-        if (err) {
-            setError(err);
-        } else {
-            // Login successful, redirect happens via App.tsx but we can force nav too
-            navigate('/'); 
-        }
-    }, 800);
+
+    try {
+      const err = await login(email.trim(), password);
+
+      if (err) {
+        setError(err);
+      } else {
+        navigate('/');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

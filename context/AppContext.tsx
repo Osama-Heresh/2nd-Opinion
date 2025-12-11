@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Case, Transaction, UserRole, Language, CaseStatus, Opinion } from '../types';
 import { MOCK_USERS, MOCK_CASES, TRANSLATIONS, DOCTOR_PAYOUT, CASE_FEE } from '../constants';
 import { supabase } from '../services/supabase';
+import { authService } from '../services/authService';
 
 interface AppContextType {
   currentUser: User | null;
@@ -57,37 +58,9 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
       if (supabase) {
         // --- REAL AUTH MODE ---
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          // Fetch full profile from DB
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (profile) {
-            // Map DB snake_case to TS camelCase
-            const mappedUser: User = {
-                id: profile.id,
-                email: profile.email,
-                name: profile.name,
-                role: profile.role as UserRole,
-                walletBalance: profile.wallet_balance || 0,
-                avatarUrl: profile.avatar_url,
-                isApproved: profile.is_approved,
-                specialty: profile.specialty,
-                hospital: profile.hospital,
-                country: profile.country,
-                linkedin: profile.linkedin,
-                bio: profile.bio,
-                rating: profile.rating,
-                casesClosed: profile.cases_closed,
-                bonusPoints: profile.bonus_points,
-                createdAt: profile.created_at
-            };
-            setCurrentUser(mappedUser);
-          }
+        const { user } = await authService.getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
         }
 
         // Fetch all users from DB
@@ -160,17 +133,15 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     initApp();
 
     // Listen for Auth Changes (Supabase)
-    const { data: authListener } = supabase?.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-            setCurrentUser(null);
-        } else if (event === 'SIGNED_IN' && session?.user) {
-             // Logic handled in initApp usually, but could force refetch here
-        }
-    }) || { data: { subscription: { unsubscribe: () => {} } } };
+    if (supabase) {
+      const { unsubscribe } = authService.onAuthStateChange((user) => {
+        setCurrentUser(user);
+      });
 
-    return () => {
-        authListener.subscription.unsubscribe();
-    };
+      return () => {
+        unsubscribe();
+      };
+    }
   }, []);
 
   // Persistence Effects (Only for Demo Mode mostly)
@@ -207,32 +178,95 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const login = async (email: string, password?: string): Promise<string | null> => {
     // 1. Try Real Auth
     if (supabase) {
-        if (!password) return "Password required for real auth.";
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return error.message;
-        
-        // Profile fetch handled by onAuthStateChange or reload, but let's manual fetch for speed
-        if (data.user) {
-             const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).maybeSingle();
-             if (profile && !profile.is_approved) return "Account pending approval.";
-             window.location.reload(); // Simple way to sync all states
-             return null;
+        if (!password) return "Password required.";
+
+        const { user, error } = await authService.signIn(email, password);
+
+        if (error) {
+          return error.message;
         }
+
+        if (user) {
+          setCurrentUser(user);
+
+          const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+          if (allUsersData) {
+            const mappedUsers = allUsersData.map((profile: any) => ({
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              role: profile.role as UserRole,
+              walletBalance: profile.wallet_balance || 0,
+              avatarUrl: profile.avatar_url,
+              isApproved: profile.is_approved,
+              specialty: profile.specialty,
+              hospital: profile.hospital,
+              country: profile.country,
+              linkedin: profile.linkedin,
+              bio: profile.bio,
+              rating: profile.rating,
+              casesClosed: profile.cases_closed,
+              bonusPoints: profile.bonus_points,
+              createdAt: profile.created_at
+            }));
+            setUsers(mappedUsers);
+          }
+
+          const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
+          if (allCasesData) {
+            const mappedCases = allCasesData.map((c: any) => ({
+              id: c.id,
+              patientId: c.patient_id,
+              patientName: c.patient_name,
+              specialty: c.specialty,
+              status: c.status as CaseStatus,
+              symptoms: c.symptoms,
+              files: c.files || [],
+              createdAt: c.created_at,
+              assignedDoctorId: c.assigned_doctor_id,
+              opinion: c.opinion,
+              patientRating: c.patient_rating,
+              patientFeedback: c.patient_feedback,
+              isRare: c.is_rare
+            }));
+            setCases(mappedCases);
+          }
+
+          const { data: allTransactionsData } = await supabase.from('transactions').select('*').order('timestamp', { ascending: false });
+          if (allTransactionsData) {
+            const mappedTransactions = allTransactionsData.map((tx: any) => ({
+              id: tx.id,
+              userId: tx.user_id,
+              amount: tx.amount,
+              type: tx.type,
+              timestamp: tx.timestamp,
+              description: tx.description,
+              caseId: tx.case_id
+            }));
+            setTransactions(mappedTransactions);
+          }
+
+          return null;
+        }
+
+        return "Authentication failed.";
     }
 
     // 2. Fallback to Mock Auth
     const user = users.find(u => u.email === email);
-    
+
     if (!user) return "User not found.";
     if (password && user.password && user.password !== password) return "Invalid password.";
     if (!user.isApproved) return "Your account is pending admin approval.";
 
     setCurrentUser(user);
-    return null; 
+    return null;
   };
 
   const logout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    if (supabase) {
+      await authService.signOut();
+    }
     setCurrentUser(null);
     if (!supabase) localStorage.removeItem('app_currentUser');
   };
@@ -240,62 +274,33 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
   const register = async (userData: Partial<User>): Promise<boolean> => {
      // 1. Try Real Auth
      if (supabase && userData.email && userData.password) {
-        // A. Create Auth User
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: userData.email,
-            password: userData.password,
+        const { user, error } = await authService.signUp({
+          email: userData.email,
+          password: userData.password,
+          name: userData.name || 'New User',
+          role: userData.role || UserRole.PATIENT,
+          avatarUrl: userData.avatarUrl,
+          specialty: userData.specialty,
+          hospital: userData.hospital,
+          country: userData.country,
+          linkedin: userData.linkedin,
+          bio: userData.bio
         });
 
-        if (authError || !authData.user) {
-            console.error("Supabase Auth Error:", authError);
-            return false;
+        if (error) {
+          console.error("Registration Error:", error.message);
+          return false;
         }
 
-        // B. Create User Record
-        const { data: newUserData, error: profileError } = await supabase.from('users').insert([{
-            id: authData.user.id,
-            email: userData.email,
-            name: userData.name,
-            role: userData.role,
-            is_approved: userData.role === UserRole.PATIENT, // Auto-approve patients
-            avatar_url: userData.avatarUrl,
-            specialty: userData.specialty,
-            hospital: userData.hospital,
-            country: userData.country,
-            linkedin: userData.linkedin,
-            bio: userData.bio
-        }]).select().single();
-
-        if (profileError) {
-            console.error("Profile Creation Error:", profileError);
-            return false;
+        if (user) {
+          setUsers(prev => [user, ...prev]);
+          if (user.isApproved) {
+            setCurrentUser(user);
+          }
+          return true;
         }
 
-        // C. Update local state with new user
-        if (newUserData) {
-            const mappedUser: User = {
-                id: newUserData.id,
-                email: newUserData.email,
-                name: newUserData.name,
-                role: newUserData.role as UserRole,
-                walletBalance: newUserData.wallet_balance || 0,
-                avatarUrl: newUserData.avatar_url,
-                isApproved: newUserData.is_approved,
-                specialty: newUserData.specialty,
-                hospital: newUserData.hospital,
-                country: newUserData.country,
-                linkedin: newUserData.linkedin,
-                bio: newUserData.bio,
-                rating: newUserData.rating,
-                casesClosed: newUserData.cases_closed,
-                bonusPoints: newUserData.bonus_points,
-                createdAt: newUserData.created_at
-            };
-            setUsers(prev => [mappedUser, ...prev]);
-            if (mappedUser.isApproved) setCurrentUser(mappedUser);
-        }
-
-        return true;
+        return false;
      }
 
      // 2. Fallback Mock Auth
