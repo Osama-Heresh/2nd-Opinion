@@ -155,7 +155,7 @@ const Footer = () => {
                             <li><Link to="/terms-of-service" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.terms')}</Link></li>
                             <li><Link to="/hipaa-compliance" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.hipaa')}</Link></li>
                             <li><Link to="/user-guide" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.guide')}</Link></li>
-                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</Link></li>
+                            <li><a href="#" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.help')}</a></li>
                         </ul>
                     </div>
 
