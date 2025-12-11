@@ -180,76 +180,94 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
     if (supabase) {
         if (!password) return "Password required.";
 
-        const { user, error } = await authService.signIn(email, password);
+        try {
+          const { user, error } = await authService.signIn(email, password);
 
-        if (error) {
-          return error.message;
+          if (error) {
+            console.error('Login error:', error);
+            return error.message;
+          }
+
+          if (user) {
+            setCurrentUser(user);
+
+            try {
+              const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+              if (allUsersData) {
+                const mappedUsers = allUsersData.map((profile: any) => ({
+                  id: profile.id,
+                  email: profile.email,
+                  name: profile.name,
+                  role: profile.role as UserRole,
+                  walletBalance: profile.wallet_balance || 0,
+                  avatarUrl: profile.avatar_url,
+                  isApproved: profile.is_approved,
+                  specialty: profile.specialty,
+                  hospital: profile.hospital,
+                  country: profile.country,
+                  linkedin: profile.linkedin,
+                  bio: profile.bio,
+                  rating: profile.rating,
+                  casesClosed: profile.cases_closed,
+                  bonusPoints: profile.bonus_points,
+                  createdAt: profile.created_at
+                }));
+                setUsers(mappedUsers);
+              }
+            } catch (err) {
+              console.error('Error loading users:', err);
+            }
+
+            try {
+              const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
+              if (allCasesData) {
+                const mappedCases = allCasesData.map((c: any) => ({
+                  id: c.id,
+                  patientId: c.patient_id,
+                  patientName: c.patient_name,
+                  specialty: c.specialty,
+                  status: c.status as CaseStatus,
+                  symptoms: c.symptoms,
+                  files: c.files || [],
+                  createdAt: c.created_at,
+                  assignedDoctorId: c.assigned_doctor_id,
+                  opinion: c.opinion,
+                  patientRating: c.patient_rating,
+                  patientFeedback: c.patient_feedback,
+                  isRare: c.is_rare
+                }));
+                setCases(mappedCases);
+              }
+            } catch (err) {
+              console.error('Error loading cases:', err);
+            }
+
+            try {
+              const { data: allTransactionsData } = await supabase.from('transactions').select('*').order('timestamp', { ascending: false });
+              if (allTransactionsData) {
+                const mappedTransactions = allTransactionsData.map((tx: any) => ({
+                  id: tx.id,
+                  userId: tx.user_id,
+                  amount: tx.amount,
+                  type: tx.type,
+                  timestamp: tx.timestamp,
+                  description: tx.description,
+                  caseId: tx.case_id
+                }));
+                setTransactions(mappedTransactions);
+              }
+            } catch (err) {
+              console.error('Error loading transactions:', err);
+            }
+
+            return null;
+          }
+
+          return "Authentication failed.";
+        } catch (error: any) {
+          console.error('Unexpected login error:', error);
+          return error.message || "An unexpected error occurred.";
         }
-
-        if (user) {
-          setCurrentUser(user);
-
-          const { data: allUsersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-          if (allUsersData) {
-            const mappedUsers = allUsersData.map((profile: any) => ({
-              id: profile.id,
-              email: profile.email,
-              name: profile.name,
-              role: profile.role as UserRole,
-              walletBalance: profile.wallet_balance || 0,
-              avatarUrl: profile.avatar_url,
-              isApproved: profile.is_approved,
-              specialty: profile.specialty,
-              hospital: profile.hospital,
-              country: profile.country,
-              linkedin: profile.linkedin,
-              bio: profile.bio,
-              rating: profile.rating,
-              casesClosed: profile.cases_closed,
-              bonusPoints: profile.bonus_points,
-              createdAt: profile.created_at
-            }));
-            setUsers(mappedUsers);
-          }
-
-          const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
-          if (allCasesData) {
-            const mappedCases = allCasesData.map((c: any) => ({
-              id: c.id,
-              patientId: c.patient_id,
-              patientName: c.patient_name,
-              specialty: c.specialty,
-              status: c.status as CaseStatus,
-              symptoms: c.symptoms,
-              files: c.files || [],
-              createdAt: c.created_at,
-              assignedDoctorId: c.assigned_doctor_id,
-              opinion: c.opinion,
-              patientRating: c.patient_rating,
-              patientFeedback: c.patient_feedback,
-              isRare: c.is_rare
-            }));
-            setCases(mappedCases);
-          }
-
-          const { data: allTransactionsData } = await supabase.from('transactions').select('*').order('timestamp', { ascending: false });
-          if (allTransactionsData) {
-            const mappedTransactions = allTransactionsData.map((tx: any) => ({
-              id: tx.id,
-              userId: tx.user_id,
-              amount: tx.amount,
-              type: tx.type,
-              timestamp: tx.timestamp,
-              description: tx.description,
-              caseId: tx.case_id
-            }));
-            setTransactions(mappedTransactions);
-          }
-
-          return null;
-        }
-
-        return "Authentication failed.";
     }
 
     // 2. Fallback to Mock Auth

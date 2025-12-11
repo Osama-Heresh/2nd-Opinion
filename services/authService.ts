@@ -35,6 +35,7 @@ const mapDbUserToUser = (dbUser: any): User => {
 export const authService = {
   async signIn(email: string, password: string): Promise<AuthResult> {
     if (!supabase) {
+      console.error('Supabase client not initialized');
       return {
         user: null,
         error: { message: 'Supabase client not initialized' }
@@ -43,6 +44,7 @@ export const authService = {
 
     try {
       const normalizedEmail = email.toLowerCase().trim();
+      console.log('Attempting login with email:', normalizedEmail);
 
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
@@ -50,6 +52,7 @@ export const authService = {
       });
 
       if (authError) {
+        console.error('Auth error:', authError);
         return {
           user: null,
           error: { message: authError.message, code: authError.code }
@@ -57,11 +60,14 @@ export const authService = {
       }
 
       if (!authData.user) {
+        console.error('No user returned from auth');
         return {
           user: null,
           error: { message: 'Authentication failed' }
         };
       }
+
+      console.log('Auth successful, fetching profile for user:', authData.user.id);
 
       const { data: profile, error: profileError } = await supabase
         .from('users')
@@ -70,6 +76,7 @@ export const authService = {
         .maybeSingle();
 
       if (profileError) {
+        console.error('Profile fetch error:', profileError);
         return {
           user: null,
           error: { message: 'Failed to fetch user profile' }
@@ -77,13 +84,17 @@ export const authService = {
       }
 
       if (!profile) {
+        console.error('No profile found for user');
         return {
           user: null,
           error: { message: 'User profile not found' }
         };
       }
 
+      console.log('Profile found:', profile);
+
       if (!profile.is_approved) {
+        console.log('User not approved, signing out');
         await supabase.auth.signOut();
         return {
           user: null,
@@ -91,11 +102,13 @@ export const authService = {
         };
       }
 
+      console.log('Login successful');
       return {
         user: mapDbUserToUser(profile),
         error: null
       };
     } catch (error: any) {
+      console.error('Unexpected error in signIn:', error);
       return {
         user: null,
         error: { message: error.message || 'An unexpected error occurred' }
