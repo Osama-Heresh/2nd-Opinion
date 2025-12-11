@@ -1,17 +1,21 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Specialty, CaseStatus, User, UserRole } from '../types';
-import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users, Wallet, CreditCard, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { PlusCircle, FileText, UploadCloud, BrainCircuit, Loader2, CheckCircle, Search, MapPin, Star, Linkedin, ArrowLeft, Building2, Users, Wallet, CreditCard, ArrowUpRight, ArrowDownLeft, AlertCircle, XCircle } from 'lucide-react';
 import { refineSymptoms } from '../services/geminiService';
 import PaymentModal from '../components/PaymentModal';
 
 const PatientDashboard = () => {
-  const { currentUser, cases, createCase, t, depositFunds, users, rateDoctor, transactions } = useApp();
+  const { currentUser, cases, createCase, t, depositFunds, users, rateDoctor, transactions, refreshUserBalance } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'new' | 'list' | 'doctors' | 'wallet'>('new');
   const [selectedDoctor, setSelectedDoctor] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'cancelled' | null>(null);
   
   // Form State
   const [symptoms, setSymptoms] = useState('');
@@ -28,11 +32,28 @@ const PatientDashboard = () => {
   const myTransactions = transactions.filter(tx => tx.userId === currentUser?.id);
   const doctors = users.filter(u => u.role === UserRole.DOCTOR);
 
-  const filteredDoctors = doctors.filter(d => 
+  const filteredDoctors = doctors.filter(d =>
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (d.specialty && d.specialty.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (d.hospital && d.hospital.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get('payment');
+
+    if (payment === 'success') {
+      setPaymentStatus('success');
+      setActiveTab('wallet');
+      navigate('/patient', { replace: true });
+      refreshUserBalance();
+      setTimeout(() => setPaymentStatus(null), 5000);
+    } else if (payment === 'cancelled') {
+      setPaymentStatus('cancelled');
+      navigate('/patient', { replace: true });
+      setTimeout(() => setPaymentStatus(null), 5000);
+    }
+  }, [location, navigate, refreshUserBalance]);
 
   const handleRefine = async () => {
     if (!symptoms) return;
@@ -63,15 +84,46 @@ const PatientDashboard = () => {
   };
 
   return (
-    <div className="grid lg:grid-cols-4 gap-6">
-      <PaymentModal 
-        isOpen={showPaymentModal} 
+    <>
+      <PaymentModal
+        isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         onSuccess={(amount) => depositFunds(amount)}
       />
 
-      {/* Sidebar / Stats */}
-      <div className="lg:col-span-1 space-y-6">
+      {paymentStatus && (
+        <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 ${
+          paymentStatus === 'success'
+            ? 'bg-green-50 border border-green-200'
+            : 'bg-yellow-50 border border-yellow-200'
+        }`}>
+          {paymentStatus === 'success' ? (
+            <>
+              <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-green-900">Payment Successful!</h4>
+                <p className="text-sm text-green-700">
+                  Your wallet has been topped up successfully. The funds are now available in your account.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-yellow-900">Payment Cancelled</h4>
+                <p className="text-sm text-yellow-700">
+                  Your payment was cancelled. No charges were made to your account.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-4 gap-6">
+        {/* Sidebar / Stats */}
+        <div className="lg:col-span-1 space-y-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
            <h3 className="text-slate-500 text-sm font-medium uppercase tracking-wide mb-2">{t('wallet.balance')}</h3>
            <div className="text-3xl font-bold text-slate-900 mb-4">${currentUser?.walletBalance.toFixed(2)}</div>
@@ -501,7 +553,8 @@ const PatientDashboard = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

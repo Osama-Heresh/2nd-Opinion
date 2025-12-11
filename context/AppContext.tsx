@@ -24,6 +24,7 @@ interface AppContextType {
   rateDoctor: (caseId: string, rating: number, feedback?: string) => void;
   depositFunds: (amount: number) => void;
   withdrawFunds: (amount: number) => Promise<boolean>;
+  refreshUserBalance: () => Promise<void>;
   resetDemo: () => void;
 }
 
@@ -60,7 +61,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         if (session?.user) {
           // Fetch full profile from DB
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', session.user.id)
             .single();
@@ -152,7 +153,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         
         // Profile fetch handled by onAuthStateChange or reload, but let's manual fetch for speed
         if (data.user) {
-             const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+             const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).single();
              if (profile && !profile.is_approved) return "Account pending approval.";
              window.location.reload(); // Simple way to sync all states
              return null;
@@ -190,8 +191,8 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             return false;
         }
 
-        // B. Create Profile Record
-        const { error: profileError } = await supabase.from('profiles').insert([{
+        // B. Create User Record
+        const { error: profileError } = await supabase.from('users').insert([{
             id: authData.user.id,
             email: userData.email,
             name: userData.name,
@@ -235,7 +236,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
 
   const updateUserStatus = (userId: string, isApproved: boolean) => {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isApproved } : u));
-      // In real app, would call supabase.from('profiles').update({ is_approved: isApproved }).eq('id', userId)
+      // In real app, would call supabase.from('users').update({ is_approved: isApproved }).eq('id', userId)
   };
 
   const updateUserProfile = async (userId: string, updates: Partial<User>) => {
@@ -248,7 +249,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         if (updates.linkedin) dbUpdates.linkedin = updates.linkedin;
         if (updates.avatarUrl) dbUpdates.avatar_url = updates.avatarUrl;
 
-        await supabase.from('profiles').update(dbUpdates).eq('id', userId);
+        await supabase.from('users').update(dbUpdates).eq('id', userId);
     }
     
     // Update local state for UI responsiveness
@@ -289,6 +290,21 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       description: 'Wallet Deposit'
     };
     setTransactions(prev => [tx, ...prev]);
+  };
+
+  const refreshUserBalance = async () => {
+    if (!currentUser || !supabase) return;
+
+    const { data: profile } = await supabase
+      .from('users')
+      .select('wallet_balance')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (profile) {
+      const updatedUser = { ...currentUser, walletBalance: profile.wallet_balance || 0 };
+      setCurrentUser(updatedUser);
+    }
   };
 
   const withdrawFunds = async (amount: number): Promise<boolean> => {
@@ -415,6 +431,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       rateDoctor,
       depositFunds,
       withdrawFunds,
+      refreshUserBalance,
       resetDemo
     }}>
       {children}
