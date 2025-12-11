@@ -64,7 +64,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
             
           if (profile) {
             // Map DB snake_case to TS camelCase
@@ -153,7 +153,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         
         // Profile fetch handled by onAuthStateChange or reload, but let's manual fetch for speed
         if (data.user) {
-             const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).single();
+             const { data: profile } = await supabase.from('users').select('*').eq('id', data.user.id).maybeSingle();
              if (profile && !profile.is_approved) return "Account pending approval.";
              window.location.reload(); // Simple way to sync all states
              return null;
@@ -299,7 +299,7 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
       .from('users')
       .select('wallet_balance')
       .eq('id', currentUser.id)
-      .single();
+      .maybeSingle();
 
     if (profile) {
       const updatedUser = { ...currentUser, walletBalance: profile.wallet_balance || 0 };

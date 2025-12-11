@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Access environment variables securely
-// Using process.env to avoid TypeScript errors with import.meta.env
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Only initialize if keys are present (allows Hybrid Mode)
 export const supabase = (supabaseUrl && supabaseAnonKey) 
