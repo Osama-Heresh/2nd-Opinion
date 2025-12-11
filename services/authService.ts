@@ -35,26 +35,21 @@ const mapDbUserToUser = (dbUser: any): User => {
 export const authService = {
   async signIn(email: string, password: string): Promise<AuthResult> {
     if (!supabase) {
-      console.error('Supabase client not initialized');
       return {
         user: null,
-        error: { message: 'Supabase client not initialized' }
+        error: { message: 'Database connection not available' }
       };
     }
 
     try {
       const normalizedEmail = email.toLowerCase().trim();
-      console.log('Attempting login with email:', normalizedEmail);
 
-      console.log('Waiting for auth response...');
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password: password.trim()
       });
-      console.log('Auth response received:', authData, authError);
 
       if (authError) {
-        console.error('Auth error:', authError);
         return {
           user: null,
           error: { message: authError.message, code: authError.code }
@@ -62,14 +57,11 @@ export const authService = {
       }
 
       if (!authData.user) {
-        console.error('No user returned from auth');
         return {
           user: null,
           error: { message: 'Authentication failed' }
         };
       }
-
-      console.log('Auth successful, fetching profile for user:', authData.user.id);
 
       const { data: profile, error: profileError } = await supabase
         .from('users')
@@ -78,42 +70,37 @@ export const authService = {
         .maybeSingle();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
+        await supabase.auth.signOut();
         return {
           user: null,
-          error: { message: 'Failed to fetch user profile' }
+          error: { message: 'Failed to load profile' }
         };
       }
 
       if (!profile) {
-        console.error('No profile found for user');
-        return {
-          user: null,
-          error: { message: 'User profile not found' }
-        };
-      }
-
-      console.log('Profile found:', profile);
-
-      if (!profile.is_approved) {
-        console.log('User not approved, signing out');
         await supabase.auth.signOut();
         return {
           user: null,
-          error: { message: 'Your account is pending admin approval' }
+          error: { message: 'Profile not found' }
         };
       }
 
-      console.log('Login successful');
+      if (!profile.is_approved) {
+        await supabase.auth.signOut();
+        return {
+          user: null,
+          error: { message: 'Your account is pending approval' }
+        };
+      }
+
       return {
         user: mapDbUserToUser(profile),
         error: null
       };
     } catch (error: any) {
-      console.error('Unexpected error in signIn:', error);
       return {
         user: null,
-        error: { message: error.message || 'An unexpected error occurred' }
+        error: { message: error.message || 'Login failed' }
       };
     }
   },
@@ -133,7 +120,7 @@ export const authService = {
     if (!supabase) {
       return {
         user: null,
-        error: { message: 'Supabase client not initialized' }
+        error: { message: 'Database connection not available' }
       };
     }
 
@@ -142,13 +129,7 @@ export const authService = {
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
-        password: userData.password,
-        options: {
-          data: {
-            name: userData.name,
-            role: userData.role
-          }
-        }
+        password: userData.password
       });
 
       if (authError) {
@@ -161,7 +142,7 @@ export const authService = {
       if (!authData.user) {
         return {
           user: null,
-          error: { message: 'Failed to create user account' }
+          error: { message: 'Failed to create account' }
         };
       }
 
@@ -189,7 +170,7 @@ export const authService = {
         await supabase.auth.signOut();
         return {
           user: null,
-          error: { message: 'Failed to create user profile' }
+          error: { message: 'Failed to create profile' }
         };
       }
 
@@ -204,14 +185,14 @@ export const authService = {
     } catch (error: any) {
       return {
         user: null,
-        error: { message: error.message || 'An unexpected error occurred' }
+        error: { message: error.message || 'Registration failed' }
       };
     }
   },
 
   async signOut(): Promise<{ error: AuthError | null }> {
     if (!supabase) {
-      return { error: { message: 'Supabase client not initialized' } };
+      return { error: { message: 'Database connection not available' } };
     }
 
     try {
@@ -252,49 +233,7 @@ export const authService = {
         error: null
       };
     } catch (error: any) {
-      return {
-        user: null,
-        error: { message: error.message || 'Failed to get current user' }
-      };
-    }
-  },
-
-  async resetPassword(email: string): Promise<{ error: AuthError | null }> {
-    if (!supabase) {
-      return { error: { message: 'Supabase client not initialized' } };
-    }
-
-    try {
-      const normalizedEmail = email.toLowerCase().trim();
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
-
-      if (error) {
-        return { error: { message: error.message } };
-      }
-
-      return { error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Failed to send reset email' } };
-    }
-  },
-
-  async updatePassword(newPassword: string): Promise<{ error: AuthError | null }> {
-    if (!supabase) {
-      return { error: { message: 'Supabase client not initialized' } };
-    }
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        return { error: { message: error.message } };
-      }
-
-      return { error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Failed to update password' } };
+      return { user: null, error: null };
     }
   },
 
@@ -303,32 +242,24 @@ export const authService = {
       return { unsubscribe: () => {} };
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        callback(null);
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profile) {
-          callback(mapDbUserToUser(profile));
-        } else {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
+        if (event === 'SIGNED_OUT') {
           callback(null);
-        }
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        } else if (session?.user) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        if (profile) {
-          callback(mapDbUserToUser(profile));
+          if (profile) {
+            callback(mapDbUserToUser(profile));
+          } else {
+            callback(null);
+          }
         }
-      }
+      })();
     });
 
     return { unsubscribe: () => subscription.unsubscribe() };
