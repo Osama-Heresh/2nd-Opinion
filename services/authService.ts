@@ -46,10 +46,18 @@ export const authService = {
       const normalizedEmail = email.toLowerCase().trim();
       console.log('Attempting login with email:', normalizedEmail);
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout - please check your connection')), 15000);
+      });
+
+      const authPromise = supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password: password.trim()
       });
+
+      console.log('Waiting for auth response...');
+      const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
+      console.log('Auth response received');
 
       if (authError) {
         console.error('Auth error:', authError);
