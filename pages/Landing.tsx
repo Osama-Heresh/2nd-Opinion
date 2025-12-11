@@ -113,16 +113,18 @@ const Landing = () => {
                             className="w-full h-auto object-cover transform hover:scale-105 transition duration-700"
                         />
                         {/* Floating Badge */}
-                        <div className="absolute bottom-6 left-6 rtl:left-auto rtl:right-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-100 max-w-[200px]">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="flex -space-x-2 rtl:space-x-reverse">
-                                    <img className="w-8 h-8 rounded-full border-2 border-white" src={users[1].avatarUrl} alt="" />
-                                    <img className="w-8 h-8 rounded-full border-2 border-white" src={users[2].avatarUrl} alt="" />
+                        {!isLoading && users.length >= 3 && (
+                            <div className="absolute bottom-6 left-6 rtl:left-auto rtl:right-6 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-100 max-w-[200px]">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex -space-x-2 rtl:space-x-reverse">
+                                        <img className="w-8 h-8 rounded-full border-2 border-white" src={users[1].avatarUrl} alt="" />
+                                        <img className="w-8 h-8 rounded-full border-2 border-white" src={users[2].avatarUrl} alt="" />
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-700">{t('landing.imgBadgeDoctors')}</span>
                                 </div>
-                                <span className="text-xs font-bold text-slate-700">{t('landing.imgBadgeDoctors')}</span>
+                                <p className="text-xs text-slate-500">{t('landing.imgBadgeReady')}</p>
                             </div>
-                            <p className="text-xs text-slate-500">{t('landing.imgBadgeReady')}</p>
-                        </div>
+                        )}
                     </div>
                     {/* Decorative Elements */}
                     <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-secondary-400/20 rounded-full blur-2xl"></div>
