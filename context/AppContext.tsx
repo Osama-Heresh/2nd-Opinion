@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Case, Transaction, UserRole, Language, CaseStatus, Opinion } from '../types';
+import { User, Case, Transaction, UserRole, Language, CaseStatus, Opinion, Specialty } from '../types';
 import { MOCK_USERS, MOCK_CASES, TRANSLATIONS, DOCTOR_PAYOUT, CASE_FEE } from '../constants';
 import { supabase } from '../services/supabase';
 import { authService } from '../services/authService';
@@ -90,21 +90,24 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
         // Fetch all cases from DB
         const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
         if (allCasesData) {
-          const mappedCases = allCasesData.map((c: any) => ({
-            id: c.id,
-            patientId: c.patient_id,
-            patientName: c.patient_name,
-            specialty: c.specialty,
-            status: c.status as CaseStatus,
-            symptoms: c.symptoms,
-            files: c.files || [],
-            createdAt: c.created_at,
-            assignedDoctorId: c.assigned_doctor_id,
-            opinion: c.opinion,
-            patientRating: c.patient_rating,
-            patientFeedback: c.patient_feedback,
-            isRare: c.is_rare
-          }));
+          const mappedCases = allCasesData.map((c: any) => {
+            const specialty = Object.values(Specialty).find(s => s === c.specialty) || c.specialty;
+            return {
+              id: c.id,
+              patientId: c.patient_id,
+              patientName: c.patient_name,
+              specialty: specialty as Specialty,
+              status: c.status as CaseStatus,
+              symptoms: c.symptoms,
+              files: c.files || [],
+              createdAt: c.created_at,
+              assignedDoctorId: c.assigned_doctor_id,
+              opinion: c.opinion,
+              patientRating: c.patient_rating,
+              patientFeedback: c.patient_feedback,
+              isRare: c.is_rare
+            };
+          });
           setCases(mappedCases);
         }
 
@@ -221,21 +224,24 @@ export const AppProvider = ({ children }: { children?: ReactNode }) => {
             try {
               const { data: allCasesData } = await supabase.from('cases').select('*').order('created_at', { ascending: false });
               if (allCasesData) {
-                const mappedCases = allCasesData.map((c: any) => ({
-                  id: c.id,
-                  patientId: c.patient_id,
-                  patientName: c.patient_name,
-                  specialty: c.specialty,
-                  status: c.status as CaseStatus,
-                  symptoms: c.symptoms,
-                  files: c.files || [],
-                  createdAt: c.created_at,
-                  assignedDoctorId: c.assigned_doctor_id,
-                  opinion: c.opinion,
-                  patientRating: c.patient_rating,
-                  patientFeedback: c.patient_feedback,
-                  isRare: c.is_rare
-                }));
+                const mappedCases = allCasesData.map((c: any) => {
+                  const specialty = Object.values(Specialty).find(s => s === c.specialty) || c.specialty;
+                  return {
+                    id: c.id,
+                    patientId: c.patient_id,
+                    patientName: c.patient_name,
+                    specialty: specialty as Specialty,
+                    status: c.status as CaseStatus,
+                    symptoms: c.symptoms,
+                    files: c.files || [],
+                    createdAt: c.created_at,
+                    assignedDoctorId: c.assigned_doctor_id,
+                    opinion: c.opinion,
+                    patientRating: c.patient_rating,
+                    patientFeedback: c.patient_feedback,
+                    isRare: c.is_rare
+                  };
+                });
                 setCases(mappedCases);
               }
             } catch (err) {
