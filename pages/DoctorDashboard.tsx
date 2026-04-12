@@ -68,23 +68,14 @@ const DoctorDashboard = () => {
     }
   }, [activeTab, currentUser]);
 
-  useEffect(() => {
-    let isMounted = true;
-    if (selectedCase && selectedCase.status === CaseStatus.OPEN) {
-        setLoadingAi(true);
-        setAiAnalysis('');
-        analyzeCaseForDoctor(selectedCase).then(res => {
-            if(isMounted) {
-                setAiAnalysis(res);
-                setLoadingAi(false);
-            }
-        });
-    } else {
-        setAiAnalysis('');
-        setLoadingAi(false);
-    }
-    return () => { isMounted = false; };
-  }, [selectedCase]);
+  const loadCaseAnalysis = async () => {
+    if (!selectedCase || selectedCase.status !== CaseStatus.OPEN) return;
+    setLoadingAi(true);
+    setAiAnalysis('');
+    const res = await analyzeCaseForDoctor(selectedCase);
+    setAiAnalysis(res);
+    setLoadingAi(false);
+  };
 
   const handleSelectCase = (c: Case) => {
     setSelectedCase(c);
@@ -540,19 +531,32 @@ const DoctorDashboard = () => {
                             {selectedCase.status === CaseStatus.OPEN && (
                                 <div className="bg-purple-50 border border-purple-100 p-5 rounded-lg relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <CheckCircle className="h-24 w-24 text-purple-600" /> 
+                                        <CheckCircle className="h-24 w-24 text-purple-600" />
                                     </div>
-                                    <div className="flex items-center gap-2 mb-3 relative z-10">
-                                        <Loader2 className="h-4 w-4 text-purple-600" />
-                                        <h4 className="text-sm font-bold text-purple-800">AI Clinical Insights (Gemini)</h4>
+                                    <div className="flex items-center justify-between gap-2 mb-3 relative z-10">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="h-4 w-4 text-purple-600" />
+                                            <h4 className="text-sm font-bold text-purple-800">AI Clinical Insights (Gemini)</h4>
+                                        </div>
+                                        {!aiAnalysis && (
+                                            <button
+                                                onClick={loadCaseAnalysis}
+                                                disabled={loadingAi}
+                                                className="text-xs px-3 py-1 bg-purple-200 hover:bg-purple-300 text-purple-800 font-bold rounded transition disabled:opacity-50"
+                                            >
+                                                {loadingAi ? 'Analyzing...' : 'Generate'}
+                                            </button>
+                                        )}
                                     </div>
                                     {loadingAi ? (
                                         <div className="flex items-center gap-3 text-sm text-purple-600 py-2">
-                                            <Loader2 className="animate-spin h-5 w-5" /> 
+                                            <Loader2 className="animate-spin h-5 w-5" />
                                             <span>Analyzing symptoms and generating differential diagnosis...</span>
                                         </div>
-                                    ) : (
+                                    ) : aiAnalysis ? (
                                         <p className="text-sm text-slate-800 whitespace-pre-line leading-relaxed relative z-10 bg-white/50 p-3 rounded border border-purple-100/50">{aiAnalysis}</p>
+                                    ) : (
+                                        <p className="text-sm text-purple-600 italic">Click "Generate" to get AI-powered clinical insights for this case.</p>
                                     )}
                                 </div>
                             )}
