@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus, User } from '../types';
 import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen, Wallet, ArrowDownLeft, ArrowUpRight, MessageCircle } from 'lucide-react';
@@ -7,8 +8,11 @@ import { analyzeCaseForDoctor } from '../services/geminiService';
 import Forum from './Forum';
 
 const DoctorDashboard = () => {
+  const location = useLocation();
   const { currentUser, cases, users, submitOpinion, updateUserProfile, t, transactions, withdrawFunds } = useApp();
-  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'rare' | 'settings' | 'wallet'>('available');
+  const [activeTab, setActiveTab] = useState<'available' | 'closed' | 'rare' | 'settings' | 'wallet' | 'forum'>(
+    (location.state as any)?.activeTab || 'available'
+  );
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   
   // Review Form State
@@ -177,8 +181,16 @@ const DoctorDashboard = () => {
                <Star className="h-6 w-6 text-orange-600" />
            </div>
         </div>
+        {/* Forum Button */}
+        <button
+           onClick={() => setActiveTab('forum')}
+           className={`p-6 rounded-xl shadow-sm border flex flex-col items-center justify-center gap-2 transition ${activeTab === 'forum' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+        >
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-xs font-bold uppercase">Forum</span>
+        </button>
         {/* Wallet Button */}
-        <button 
+        <button
            onClick={() => setActiveTab('wallet')}
            className={`p-6 rounded-xl shadow-sm border flex flex-col items-center justify-center gap-2 transition ${activeTab === 'wallet' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
         >
@@ -186,7 +198,7 @@ const DoctorDashboard = () => {
             <span className="text-xs font-bold uppercase">{t('wallet.title')}</span>
         </button>
         {/* Settings Button */}
-        <button 
+        <button
            onClick={() => setActiveTab('settings')}
            className={`p-6 rounded-xl shadow-sm border flex flex-col items-center justify-center gap-2 transition ${activeTab === 'settings' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
         >
@@ -198,7 +210,7 @@ const DoctorDashboard = () => {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-[650px] flex flex-col">
-           {activeTab !== 'settings' && activeTab !== 'wallet' ? (
+           {activeTab !== 'settings' && activeTab !== 'wallet' && activeTab !== 'forum' ? (
              <>
                 {/* Tabs */}
                 <div className="flex border-b border-slate-200 overflow-x-auto">
@@ -319,6 +331,12 @@ const DoctorDashboard = () => {
                     )}
                 </div>
              </>
+           ) : activeTab === 'forum' ? (
+             <div className="p-4 bg-slate-50 h-full flex flex-col gap-2">
+                 <button onClick={() => setActiveTab('available')} className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 text-sm hover:bg-slate-100 transition shadow-sm">
+                     Back to Cases
+                 </button>
+             </div>
            ) : (
              <div className="p-4 bg-slate-50 h-full flex flex-col gap-2">
                  <button onClick={() => setActiveTab('available')} className="text-left px-4 py-3 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 text-sm hover:bg-slate-100 transition shadow-sm">
@@ -329,8 +347,10 @@ const DoctorDashboard = () => {
         </div>
 
         {/* Right Column (Detail or Settings Form) */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[650px] overflow-y-auto flex flex-col relative">
-            {activeTab === 'wallet' ? (
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 h-[650px] overflow-hidden flex flex-col relative">
+            {activeTab === 'forum' ? (
+                <Forum />
+            ) : activeTab === 'wallet' ? (
                 <div className="max-w-xl mx-auto w-full">
                     <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
                         <Wallet className="h-6 w-6 text-slate-400" />

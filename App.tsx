@@ -17,10 +17,10 @@ import TermsOfService from './pages/TermsOfService';
 import UserGuide from './pages/UserGuide';
 import { UserRole } from './types';
 import { 
-  Activity, Languages, LogOut, Wallet, 
-  Facebook, Twitter, Instagram, Linkedin, 
+  Activity, Languages, LogOut, Wallet,
+  Facebook, Twitter, Instagram, Linkedin,
   Mail, Phone, MapPin, ChevronRight, Heart,
-  Menu, X
+  Menu, X, MessageCircle
 } from 'lucide-react';
 
 // ScrollToTop Component to handle scroll reset on navigation
@@ -113,7 +113,7 @@ const Header = () => {
 }
 
 const Footer = () => {
-    const { t } = useApp();
+    const { t, currentUser } = useApp();
     return (
         <footer className="bg-slate-950 text-slate-300 border-t border-primary-900 font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -144,6 +144,22 @@ const Footer = () => {
                             <li><Link to="/how-it-works" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.howItWorks')}</Link></li>
                             <li><Link to="/find-doctors" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('link.findDoctor')}</Link></li>
                             <li><Link to="/reviews" className="hover:text-secondary-400 transition flex items-center gap-2"><ChevronRight className="h-3 w-3 text-slate-600" /> {t('nav.reviews')}</Link></li>
+                            {currentUser?.role === 'DOCTOR' && (
+                                <>
+                                    <li className="pt-3 border-t border-slate-800 mt-3">
+                                        <span className="text-xs text-slate-500 uppercase font-bold">Doctors Only</span>
+                                    </li>
+                                    <li>
+                                        <Link to="/doctor-dashboard" state={{ activeTab: 'forum' }} className="hover:text-secondary-400 transition flex items-center gap-2">
+                                            <ChevronRight className="h-3 w-3 text-slate-600" />
+                                            <span className="flex items-center gap-2">
+                                                <MessageCircle className="h-4 w-4" />
+                                                Doctor Forum
+                                            </span>
+                                        </Link>
+                                    </li>
+                                </>
+                            )}
                         </ul>
                     </div>
 
