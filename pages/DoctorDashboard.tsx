@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Case, CaseStatus, User } from '../types';
-import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen, Wallet, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { Check, FileSearch, Loader2, DollarSign, Trophy, Clock, CheckCircle, AlertCircle, ChevronRight, Star, Award, Settings, Upload, Save, User as UserIcon, Sparkles, BookOpen, Wallet, ArrowDownLeft, ArrowUpRight, MessageCircle } from 'lucide-react';
 import { analyzeCaseForDoctor } from '../services/geminiService';
+import Forum from './Forum';
 
 const DoctorDashboard = () => {
   const { currentUser, cases, users, submitOpinion, updateUserProfile, t, transactions, withdrawFunds } = useApp();
@@ -661,7 +662,7 @@ const DoctorDashboard = () => {
                     )}
                 </>
             ) : (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                <div className="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center text-slate-400">
                     <div className="bg-slate-50 p-6 rounded-full mb-6">
                         <FileSearch className="h-16 w-16 text-slate-300" />
                     </div>

@@ -6,6 +6,27 @@ export const CASE_FEE = 40.00;
 export const DOCTOR_PAYOUT = 28.00;
 export const PLATFORM_FEE = 12.00;
 
+export const SPECIALTIES = [
+  'Cardiology',
+  'Dermatology',
+  'Neurology',
+  'Oncology',
+  'Orthopedics',
+  'Pediatrics',
+  'Psychiatry',
+  'General Medicine',
+  'Rheumatology',
+  'Gastroenterology',
+  'Allergy & Immunology',
+  'Plastic & Reconstructive Surgery',
+  'Sports Medicine',
+  'Geriatrics',
+  'Occupational Medicine',
+  'Radiology',
+  'Pathology',
+  'Palliative Care'
+];
+
 // Mock Data Seeding
 export const MOCK_USERS: User[] = [
   {
