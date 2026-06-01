@@ -150,7 +150,7 @@ const Footer = () => {
                                         <span className="text-xs text-slate-500 uppercase font-bold">Doctors Only</span>
                                     </li>
                                     <li>
-                                        <Link to="/doctor-dashboard" state={{ activeTab: 'forum' }} className="hover:text-secondary-400 transition flex items-center gap-2">
+                                        <Link to="/doctor" state={{ activeTab: 'forum' }} className="hover:text-secondary-400 transition flex items-center gap-2">
                                             <ChevronRight className="h-3 w-3 text-slate-600" />
                                             <span className="flex items-center gap-2">
                                                 <MessageCircle className="h-4 w-4" />
